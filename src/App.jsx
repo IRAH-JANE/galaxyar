@@ -63,7 +63,15 @@ function App() {
   const sizes = [0.1, 0.18, 0.22, 0.15, 0.45, 0.35, 0.3, 0.28];
 
   return (
-    <div style={{ width: "100vw", height: "100vh", overflow: "hidden" }}>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        width: "100%",
+        height: "100dvh", // better for mobile
+        overflow: "hidden",
+      }}
+    >
       {/* INFO CARD */}
       {info && (
         <div
