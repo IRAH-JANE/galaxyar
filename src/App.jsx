@@ -1,347 +1,274 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 function App() {
   const [info, setInfo] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
   const [timeScale, setTimeScale] = useState(1);
-  const [showOrbits, setShowOrbits] = useState(true);
-  const [showLabels, setShowLabels] = useState(true);
+
+  const [angles, setAngles] = useState([0, 0, 0, 0, 0, 0, 0, 0]);
+
+  // 🎤 VOICE STATE
+  const [listening, setListening] = useState(false);
+  const [awake, setAwake] = useState(false);
+
+  const recognitionRef = useRef(null);
+  const wakeTimeout = useRef(null);
+  const lastHeard = useRef(Date.now());
 
   const planetData = {
-    Mercury: {
-      dist: "57.9M km",
-      temp: "167°C",
-      size: "4,879 km",
-      texture: "/textures/mercury.jpg",
-      desc: "Smallest planet, closest to the Sun.",
-    },
-    Venus: {
-      dist: "108.2M km",
-      temp: "464°C",
-      size: "12,104 km",
-      texture: "/textures/venus.jpg",
-      desc: "Hottest planet due to thick atmosphere.",
-    },
-    Earth: {
-      dist: "149.6M km",
-      temp: "15°C",
-      size: "12,742 km",
-      texture: "/textures/earth.jpg",
-      desc: "Our home planet and the only one with life.",
-    },
-    Mars: {
-      dist: "227.9M km",
-      temp: "-65°C",
-      size: "6,779 km",
-      texture: "/textures/mars.jpg",
-      desc: "The Red Planet, home to Olympus Mons.",
-    },
-    Jupiter: {
-      dist: "778.5M km",
-      temp: "-110°C",
-      size: "139,820 km",
-      texture: "/textures/jupiter.jpg",
-      desc: "Largest planet with a Great Red Spot.",
-    },
-    Saturn: {
-      dist: "1.4B km",
-      temp: "-140°C",
-      size: "116,460 km",
-      texture: "/textures/saturn.jpg",
-      desc: "Famous for its spectacular ring system.",
-    },
-    Uranus: {
-      dist: "2.9B km",
-      temp: "-195°C",
-      size: "50,724 km",
-      texture: "/textures/uranus.jpg",
-      desc: "An ice giant that rotates on its side.",
-    },
-    Neptune: {
-      dist: "4.5B km",
-      temp: "-201°C",
-      size: "49,244 km",
-      texture: "/textures/neptune.jpg",
-      desc: "The most distant and windiest planet.",
-    },
+    Mercury: { desc: "Smallest planet", texture: "/textures/mercury.jpg" },
+    Venus: { desc: "Hottest planet", texture: "/textures/venus.jpg" },
+    Earth: { desc: "Our home", texture: "/textures/earth.jpg" },
+    Mars: { desc: "Red planet", texture: "/textures/mars.jpg" },
+    Jupiter: { desc: "Largest planet", texture: "/textures/jupiter.jpg" },
+    Saturn: { desc: "Ring planet", texture: "/textures/saturn.jpg" },
+    Uranus: { desc: "Ice giant", texture: "/textures/uranus.jpg" },
+    Neptune: { desc: "Windy planet", texture: "/textures/neptune.jpg" },
   };
 
-  const handlePlanetClick = (name) => {
-    setInfo({ name, ...planetData[name] });
+  const names = Object.keys(planetData);
+  const distances = [1.2, 1.7, 2.2, 2.8, 3.5, 4.3, 5.1, 5.8];
+  const speeds = [0.015, 0.012, 0.009, 0.007, 0.005, 0.004, 0.003, 0.002];
+  const sizes = [0.1, 0.15, 0.18, 0.2, 0.35, 0.3, 0.25, 0.25];
+
+  // 🌌 ORBITS
+  useEffect(() => {
+    let id;
+    const loop = () => {
+      if (!isPaused) {
+        setAngles((p) => p.map((a, i) => a + speeds[i] * timeScale));
+      }
+      id = requestAnimationFrame(loop);
+    };
+    id = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(id);
+  }, [isPaused, timeScale]);
+
+  // 📷 CAMERA ZOOM
+  useEffect(() => {
+    const cam = document.querySelector("#camera");
+    if (cam) cam.setAttribute("position", `0 1.6 ${5 - zoom * 1.8}`);
+  }, [zoom]);
+
+  // 🔊 SPEAK
+  const speak = (text) => {
+    const u = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
   };
 
-  const distances = [1.0, 1.4, 1.9, 2.5, 3.5, 4.5, 5.5, 6.3];
-  // Calculate speeds based on timeScale and pause state
-  const baseSpeeds = [6000, 9000, 12000, 16000, 25000, 32000, 40000, 45000];
-  const speeds = baseSpeeds.map((s) => (isPaused ? 0 : s / timeScale));
-  const sizes = [0.1, 0.18, 0.22, 0.15, 0.45, 0.35, 0.3, 0.28];
+  // 🧠 FIXED VOICE ENGINE (IMPORTANT PART)
+  const handleCommand = (text) => {
+    const raw = text.toLowerCase().trim();
+    console.log("HEARD:", raw);
+
+    lastHeard.current = Date.now();
+
+    // 🟢 WAKE WORD
+    if (!awake) {
+      if (raw.includes("hey galaxy")) {
+        setAwake(true);
+        speak("Galaxy activated");
+
+        clearTimeout(wakeTimeout.current);
+        wakeTimeout.current = setTimeout(() => {
+          setAwake(false);
+          speak("Galaxy sleeping");
+        }, 20000); // 🔥 longer stability
+      }
+      return;
+    }
+
+    // 🪐 PLANET DETECTION (FIXED FLEXIBLE MATCH)
+    const foundPlanet = names.find((p) => raw.includes(p.toLowerCase()));
+
+    if (foundPlanet) {
+      setInfo({ name: foundPlanet, ...planetData[foundPlanet] });
+      speak(`${foundPlanet}. ${planetData[foundPlanet].desc}`);
+      return;
+    }
+
+    // 🎮 COMMANDS (natural speech support)
+    if (raw.includes("zoom in")) {
+      setZoom((z) => Math.min(z + 0.5, 4));
+      speak("Zooming in");
+      return;
+    }
+
+    if (raw.includes("zoom out")) {
+      setZoom((z) => Math.max(z - 0.5, 0.5));
+      speak("Zooming out");
+      return;
+    }
+
+    if (raw.includes("pause")) {
+      setIsPaused(true);
+      speak("Paused");
+      return;
+    }
+
+    if (raw.includes("resume")) {
+      setIsPaused(false);
+      speak("Resumed");
+      return;
+    }
+
+    speak("Command not recognized");
+  };
+
+  // 🎤 START VOICE
+  const startVoice = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Use Chrome browser");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
+    recognition.onresult = (e) => {
+      const text = e.results[e.results.length - 1][0].transcript;
+      handleCommand(text);
+    };
+
+    recognition.onerror = (e) => console.log("Voice error:", e.error);
+
+    recognition.onend = () => {
+      if (listening) recognition.start();
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+    setListening(true);
+  };
+
+  const stopVoice = () => {
+    recognitionRef.current?.stop();
+    setListening(false);
+    setAwake(false);
+  };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        width: "100%",
-        height: "100dvh",
-        overflow: "hidden",
-        fontFamily: "sans-serif",
-      }}
-    >
-      {/* --- CONTROL CENTER (Left Side) --- */}
+    <div style={{ position: "fixed", inset: 0 }}>
+      {/* STATUS */}
       <div
         style={{
           position: "absolute",
-          top: "20px",
-          left: "20px",
-          zIndex: 100,
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
+          top: 10,
+          right: 10,
+          zIndex: 9999,
+          color: awake ? "#00ffcc" : "#aaa",
         }}
       >
-        {/* Time Controls */}
-        <div
-          style={{
-            background: "rgba(0,0,0,0.8)",
-            color: "white",
-            padding: "15px",
-            borderRadius: "12px",
-            border: "1px solid #333",
-          }}
-        >
-          <h4 style={{ margin: "0 0 10px 0", color: "cyan" }}>
-            ⏱ Time Control
-          </h4>
-          <button
-            onClick={() => setIsPaused(!isPaused)}
-            style={{
-              width: "100%",
-              padding: "8px",
-              cursor: "pointer",
-              background: isPaused ? "#28a745" : "#dc3545",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-            }}
-          >
-            {isPaused ? "▶ Play Orbits" : "⏸ Pause Orbits"}
-          </button>
-          <div style={{ marginTop: "10px" }}>
-            <label style={{ fontSize: "12px" }}>Warp Speed: {timeScale}x</label>
-            <input
-              type="range"
-              min="0.1"
-              max="5"
-              step="0.1"
-              value={timeScale}
-              onChange={(e) => setTimeScale(e.target.value)}
-              style={{ width: "100%" }}
-            />
-          </div>
-        </div>
-
-        {/* Layer Toggles */}
-        <div
-          style={{
-            background: "rgba(0,0,0,0.8)",
-            color: "white",
-            padding: "15px",
-            borderRadius: "12px",
-            border: "1px solid #333",
-          }}
-        >
-          <h4 style={{ margin: "0 0 10px 0", color: "cyan" }}>
-            📡 View Layers
-          </h4>
-          <label
-            style={{ display: "block", fontSize: "14px", cursor: "pointer" }}
-          >
-            <input
-              type="checkbox"
-              checked={showOrbits}
-              onChange={() => setShowOrbits(!showOrbits)}
-            />{" "}
-            Show Orbits
-          </label>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              cursor: "pointer",
-              marginTop: "5px",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={showLabels}
-              onChange={() => setShowLabels(!showLabels)}
-            />{" "}
-            Show Labels
-          </label>
-        </div>
+        {listening ? (awake ? "🟢 GALAXY ACTIVE" : "🎤 Listening") : "⚫ OFF"}
       </div>
 
-      {/* --- ZOOM SLIDER (Bottom) --- */}
+      {/* CONTROL PANEL */}
       <div
         style={{
           position: "absolute",
-          bottom: "30px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 100,
-          background: "rgba(0,0,0,0.8)",
-          padding: "10px 25px",
-          borderRadius: "30px",
-          color: "white",
-          display: "flex",
-          alignItems: "center",
-          gap: "15px",
+          top: 20,
+          left: 20,
+          zIndex: 9999,
+          width: 220,
+          padding: 15,
+          borderRadius: 15,
+          background: "rgba(0,0,0,0.6)",
+          color: "#fff",
         }}
       >
-        <span>🔍 Zoom</span>
+        <button onClick={() => (listening ? stopVoice() : startVoice())}>
+          {listening ? "Stop Voice" : "Start Voice"}
+        </button>
+
+        <p>
+          Say: <b>Hey Galaxy</b>
+        </p>
+
+        <button onClick={() => setIsPaused(!isPaused)}>
+          {isPaused ? "Resume" : "Pause"}
+        </button>
+
+        <p>Zoom</p>
         <input
           type="range"
           min="0.5"
           max="4"
           step="0.1"
           value={zoom}
-          onChange={(e) => setZoom(parseFloat(e.target.value))}
+          onChange={(e) => setZoom(+e.target.value)}
         />
       </div>
 
-      {/* --- INFO CARD (Right) --- */}
-      {info && (
-        <div
-          style={{
-            position: "absolute",
-            top: "20px",
-            right: "20px",
-            zIndex: 100,
-            width: "260px",
-            backgroundColor: "rgba(0,0,0,0.9)",
-            color: "white",
-            padding: "20px",
-            borderRadius: "15px",
-            border: "1px solid cyan",
-          }}
-        >
-          <button
-            onClick={() => setInfo(null)}
-            style={{
-              float: "right",
-              background: "none",
-              border: "none",
-              color: "white",
-              fontSize: "20px",
-              cursor: "pointer",
-            }}
-          >
-            ×
-          </button>
-          <h2 style={{ margin: "0 0 10px 0", borderBottom: "1px solid cyan" }}>
-            {info.name}
-          </h2>
-          <p>
-            <strong>Temp:</strong> {info.temp}
-          </p>
-          <p>
-            <strong>Size:</strong> {info.size}
-          </p>
-          <p>
-            <strong>Dist:</strong> {info.dist}
-          </p>
-          <p style={{ fontSize: "13px", color: "#aaa", lineHeight: "1.4" }}>
-            {info.desc}
-          </p>
-        </div>
-      )}
+      {/* INFO PANEL */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 20,
+          left: 20,
+          width: 300,
+          padding: 15,
+          borderRadius: 15,
+          background: "rgba(0,0,0,0.6)",
+          color: "#fff",
+          zIndex: 9999,
+        }}
+      >
+        <h3>NASA INFO</h3>
 
+        {info ? (
+          <>
+            <h2>{info.name}</h2>
+            <p>{info.desc}</p>
+          </>
+        ) : (
+          <p>Say “Hey Galaxy” then planet name</p>
+        )}
+      </div>
+
+      {/* AR SCENE */}
       <a-scene
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false;"
-        vr-mode-ui="enabled: false"
+        arjs="sourceType:webcam; debugUIEnabled:false"
+        renderer="alpha:true"
+        vr-mode-ui="enabled:false"
       >
-        <a-light type="ambient" intensity="1.2"></a-light>
-        <a-light type="point" position="0 0 0" intensity="2"></a-light>
+        <a-light type="ambient" intensity="1.2" />
+        <a-light type="point" intensity="2" />
 
         <a-marker preset="hiro">
-          <a-entity id="solar-system" scale={`${zoom} ${zoom} ${zoom}`}>
+          <a-entity>
+            {/* SUN */}
             <a-sphere
               radius="0.6"
-              material="src: url(/textures/sun.jpg); emissive: #ffaa00; emissiveIntensity: 1"
-            ></a-sphere>
+              material="src:/textures/sun.jpg; emissive:#ffaa00"
+            />
 
-            {Object.keys(planetData).map((name, index) => {
-              const planet = planetData[name];
+            {/* PLANETS */}
+            {names.map((name, i) => {
+              const p = planetData[name];
+
+              const x = distances[i] * Math.cos(angles[i]);
+              const z = distances[i] * Math.sin(angles[i]);
+
               return (
-                <React.Fragment key={name}>
-                  {/* Orbit Ring */}
-                  {showOrbits && (
-                    <a-ring
-                      rotation="-90 0 0"
-                      radius-inner={distances[index] - 0.01}
-                      radius-outer={distances[index] + 0.01}
-                      material="color: cyan; opacity: 0.2"
-                    ></a-ring>
-                  )}
+                <a-entity key={name} position={`${x} 0.5 ${z}`}>
+                  <a-text value={name} scale="0.4 0.4 0.4" look-at="#camera" />
 
-                  <a-entity
-                    animation={
-                      !isPaused
-                        ? `property: rotation; to: 0 360 0; loop: true; dur: ${speeds[index]}; easing: linear`
-                        : ""
-                    }
-                  >
-                    <a-entity position={`${distances[index]} 0.5 0`}>
-                      {/* Planet Label */}
-                      {showLabels && (
-                        <a-text
-                          value={name}
-                          position="0 0.5 0"
-                          align="center"
-                          scale="0.4 0.4 0.4"
-                          look-at="[camera]"
-                        ></a-text>
-                      )}
-
-                      <a-sphere
-                        class="clickable"
-                        radius={sizes[index]}
-                        onClick={() => handlePlanetClick(name)}
-                        material={`src: url(${planet.texture}); roughness: 0.8`}
-                      ></a-sphere>
-
-                      {name === "Earth" && (
-                        <a-sphere
-                          radius={sizes[index] + 0.01}
-                          material="src: url(/textures/earth_clouds.png); transparent: true; opacity: 0.5"
-                          animation="property: rotation; to: 0 360 0; loop: true; dur: 4000"
-                        ></a-sphere>
-                      )}
-
-                      {name === "Saturn" && (
-                        <a-ring
-                          radius-inner={sizes[index] + 0.05}
-                          radius-outer={sizes[index] + 0.35}
-                          rotation="-80 0 0"
-                          material="src: url(/textures/saturn_ring.png); transparent: true; opacity: 0.7"
-                        ></a-ring>
-                      )}
-                    </a-entity>
-                  </a-entity>
-                </React.Fragment>
+                  <a-sphere radius={sizes[i]} material={`src:${p.texture};`} />
+                </a-entity>
               );
             })}
           </a-entity>
         </a-marker>
 
-        <a-entity camera>
-          <a-cursor
-            raycaster="objects: .clickable"
-            cursor="rayOrigin: mouse"
-          ></a-cursor>
-        </a-entity>
+        <a-entity id="camera" camera look-controls />
       </a-scene>
     </div>
   );
