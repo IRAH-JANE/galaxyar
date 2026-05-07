@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import ControlPanel from "./components/ControlPanel";
-import PlanetFocus from "./components/PlanetFocus";
+import PlanetFocus from "./components/Planetfocus";
 import planets from "./data/planets";
 import "./App.css";
 
