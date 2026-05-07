@@ -1,79 +1,50 @@
 import React, { useState, forwardRef } from "react";
 
 const ControlPanel = forwardRef(function ControlPanel(
-  { listening, startVoice, stopVoice, zoom, setZoom, isPaused, setIsPaused },
+  { listening, startVoice, stopVoice, isPaused, setIsPaused },
   ref,
 ) {
-  const [showCommands, setShowCommands] = useState(false);
+  const [showCmds, setShowCmds] = useState(false);
 
   return (
-    <div className="glass-panel control-panel" ref={ref}>
-      <h2>🚀 GalaxyAR</h2>
+    <div className="ctrl-panel" ref={ref}>
+      <h2 className="ctrl-title">🚀 GalaxyAR</h2>
 
       <button
-        className="galaxy-btn"
+        className="ctrl-btn"
         onClick={() => (listening ? stopVoice() : startVoice())}
       >
         {listening ? "🎙 Stop Voice" : "🎙 Start Voice"}
       </button>
 
-      <button className="galaxy-btn" onClick={() => setIsPaused(!isPaused)}>
+      <button className="ctrl-btn" onClick={() => setIsPaused(!isPaused)}>
         {isPaused ? "▶ Resume" : "⏸ Pause"}
       </button>
 
-      <div className="slider-group">
-        <p>Zoom: {zoom.toFixed(1)}x</p>
-        <input
-          type="range"
-          min="0.5"
-          max="4"
-          step="0.1"
-          value={zoom}
-          onChange={(e) => setZoom(+e.target.value)}
-        />
-      </div>
-
       <button
-        className="galaxy-btn cmd-toggle"
-        onClick={() => setShowCommands((v) => !v)}
+        className="ctrl-btn ctrl-btn--subtle"
+        onClick={() => setShowCmds((v) => !v)}
       >
-        {showCommands ? "▲ Hide Commands" : "▼ Voice Commands"}
+        {showCmds ? "▲ Hide Commands" : "▼ Voice Commands"}
       </button>
 
-      {showCommands && (
-        <div className="commands">
-          <ul>
-            <li>
-              <strong>Hey Galaxy</strong> — wake up
-            </li>
-            <li>
-              <strong>Goodbye / Sleep</strong> — sleep
-            </li>
-            <li>
-              <strong>[Planet name]</strong> — show info
-            </li>
-            <li>
-              <strong>How many moons [planet]</strong>
-            </li>
-            <li>
-              <strong>Temperature of [planet]</strong>
-            </li>
-            <li>
-              <strong>Gravity of [planet]</strong>
-            </li>
-            <li>
-              <strong>Atmosphere of [planet]</strong>
-            </li>
-            <li>
-              <strong>Fun fact [planet]</strong>
-            </li>
-            <li>
-              <strong>Zoom in / Zoom out</strong>
-            </li>
-            <li>
-              <strong>Pause / Resume</strong>
-            </li>
-          </ul>
+      {showCmds && (
+        <div className="ctrl-cmds">
+          <div className="ctrl-cmd">
+            <strong>Hey Galaxy</strong> — wake up
+          </div>
+          <div className="ctrl-cmd">
+            <strong>Goodbye / Sleep</strong> — sleep
+          </div>
+          <div className="ctrl-cmd">
+            <strong>[Planet name]</strong> — focus planet
+          </div>
+          <div className="ctrl-cmd">
+            <strong>Moons / Temperature / Gravity...</strong>
+          </div>
+          <div className="ctrl-cmd">
+            <strong>Pause / Resume</strong> — orbits
+          </div>
         </div>
       )}
     </div>

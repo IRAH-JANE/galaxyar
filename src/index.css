@@ -1,58 +1,25 @@
-/* ==============================================
-   index.css — AR SCENE LAYERING ONLY
-   ============================================== */
-
-html,
-body,
-#root {
+/* index.css — base resets only. A-Frame handles the scene layer. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html,
+body {
   width: 100%;
   height: 100%;
-  /* !important overrides anything AR.js / A-Frame injects */
-  overflow: hidden !important;
-  background-color: #000;
-  scrollbar-width: none; /* Firefox */
+  overflow: hidden;
+  background: #000;
+  font-family: "Segoe UI", system-ui, sans-serif;
 }
 
-/* Hide webkit scrollbar track on root elements */
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-#root::-webkit-scrollbar {
-  display: none;
-}
-
-/* AR scene pinned to base layer */
-a-scene {
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 100% !important;
-  height: 100% !important;
-  z-index: 0 !important;
-}
-
-a-scene canvas,
-a-scene video {
-  z-index: 0 !important;
-  position: absolute !important;
-}
-
-/* UI overlay — above scene, transparent to AR clicks */
-.app-container {
+/* UI overlay — above A-Frame canvas */
+#ui-root {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 10;
+  inset: 0;
+  z-index: 100;
   pointer-events: none;
-}
-
-/* Only panels/buttons capture pointer events */
-.glass-panel,
-.status-indicator,
-.galaxy-btn,
-input[type="range"] {
-  pointer-events: all;
 }

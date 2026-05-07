@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import "./index.css";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <App />
-);
+// Mount into #ui-root so A-Frame's canvas is untouched
+ReactDOM.createRoot(document.getElementById("ui-root")).render(<App />);

@@ -1,39 +1,75 @@
-import React, { useState, useRef, useEffect } from "react";
-import ARScene from "./components/ARScene";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import ControlPanel from "./components/ControlPanel";
-import InfoPanel from "./components/InfoPanel";
+import PlanetFocus from "./components/PlanetFocus";
 import planets from "./data/planets";
 import "./App.css";
 
 function App() {
-  const [info, setInfo] = useState(null);
+  const [focusPlanet, setFocusPlanet] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
   const [listening, setListening] = useState(false);
   const [awake, setAwake] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [markerFound, setMarkerFound] = useState(false);
 
   const recognitionRef = useRef(null);
   const isListeningRef = useRef(false);
-
-  // ✅ FIX: Use refs so handleCommand always reads latest values
   const awakeRef = useRef(false);
-  const zoomRef = useRef(1);
-  const isPausedRef = useRef(false);
+  const transcriptTimer = useRef(null);
+  const controlRef = useRef(null);
 
-  // Keep refs in sync with state
   useEffect(() => {
     awakeRef.current = awake;
   }, [awake]);
+
+  // ── Listen for planet clicks dispatched from vanilla JS in index.html ──
   useEffect(() => {
-    zoomRef.current = zoom;
-  }, [zoom]);
+    const handler = (e) => {
+      const name = e.detail?.name;
+      if (name && planets[name]) {
+        setFocusPlanet({ name, ...planets[name] });
+      }
+    };
+    window.addEventListener("planet-clicked", handler);
+    return () => window.removeEventListener("planet-clicked", handler);
+  }, []);
+
+  // ── Listen for AR marker found/lost ──
   useEffect(() => {
-    isPausedRef.current = isPaused;
+    const onFound = () => setMarkerFound(true);
+    const onLost = () => setMarkerFound(false);
+    const marker = document.querySelector("#hiro-marker");
+    if (marker) {
+      marker.addEventListener("markerFound", onFound);
+      marker.addEventListener("markerLost", onLost);
+      return () => {
+        marker.removeEventListener("markerFound", onFound);
+        marker.removeEventListener("markerLost", onLost);
+      };
+    }
+    // retry after A-Frame loads
+    const t = setTimeout(() => {
+      const m = document.querySelector("#hiro-marker");
+      if (m) {
+        m.addEventListener("markerFound", onFound);
+        m.addEventListener("markerLost", onLost);
+      }
+    }, 2000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // ── Sync pause to vanilla orbit animation ──
+  useEffect(() => {
+    if (window.__galaxyAR) window.__galaxyAR.setPaused(isPaused);
   }, [isPaused]);
 
-  // =========================
-  // SPEAK FUNCTION
-  // =========================
+  const showTranscript = (text) => {
+    setTranscript(text);
+    clearTimeout(transcriptTimer.current);
+    transcriptTimer.current = setTimeout(() => setTranscript(""), 3000);
+  };
+
   const speak = (text) => {
     const u = new SpeechSynthesisUtterance(text);
     u.pitch = 1.05;
@@ -43,16 +79,10 @@ function App() {
     window.speechSynthesis.speak(u);
   };
 
-  // =========================
-  // COMMAND HANDLER (uses refs — always fresh values)
-  // =========================
   const handleCommand = useRef((text) => {
     const raw = text.toLowerCase();
-    console.log("HEARD:", raw);
+    showTranscript(`"${text}"`);
 
-    // =========================
-    // WAKE WORD
-    // =========================
     if (!awakeRef.current) {
       if (
         raw.includes("hey galaxy") ||
@@ -67,171 +97,96 @@ function App() {
       return;
     }
 
-    // =========================
-    // FIND PLANET
-    // =========================
-    const foundPlanet = Object.keys(planets).find((p) =>
+    const foundKey = Object.keys(planets).find((p) =>
       raw.includes(p.toLowerCase()),
     );
 
-    // =========================
-    // SMART QUESTIONS
-    // =========================
-    if (raw.includes("how many moons") && foundPlanet) {
-      speak(`${foundPlanet} has ${planets[foundPlanet].moons} moons.`);
+    if (raw.includes("how many moons") && foundKey) {
+      speak(`${foundKey} has ${planets[foundKey].moons} moons.`);
+      return;
+    }
+    if (raw.includes("temperature") && foundKey) {
+      speak(`${foundKey} temperature: ${planets[foundKey].temperature}.`);
+      return;
+    }
+    if (raw.includes("gravity") && foundKey) {
+      speak(`${foundKey} gravity: ${planets[foundKey].gravity}.`);
+      return;
+    }
+    if (raw.includes("atmosphere") && foundKey) {
+      speak(`${foundKey} atmosphere: ${planets[foundKey].atmosphere}.`);
+      return;
+    }
+    if (raw.includes("diameter") && foundKey) {
+      speak(`${foundKey} diameter: ${planets[foundKey].diameter}.`);
+      return;
+    }
+    if (raw.includes("fun fact") && foundKey) {
+      speak(`Fun fact: ${planets[foundKey].funFact}`);
       return;
     }
 
-    if (raw.includes("temperature") && foundPlanet) {
-      speak(
-        `${foundPlanet} has a temperature of ${planets[foundPlanet].temperature}.`,
-      );
+    if (foundKey) {
+      setFocusPlanet({ name: foundKey, ...planets[foundKey] });
+      speak(`${foundKey}. ${planets[foundKey].desc}`);
       return;
     }
 
-    if (raw.includes("gravity") && foundPlanet) {
-      speak(`${foundPlanet} has a gravity of ${planets[foundPlanet].gravity}.`);
-      return;
-    }
-
-    if (raw.includes("atmosphere") && foundPlanet) {
-      speak(
-        `${foundPlanet} has an atmosphere of ${planets[foundPlanet].atmosphere}.`,
-      );
-      return;
-    }
-
-    if (raw.includes("diameter") && foundPlanet) {
-      speak(
-        `${foundPlanet} has a diameter of ${planets[foundPlanet].diameter}.`,
-      );
-      return;
-    }
-
-    if (raw.includes("fun fact") && foundPlanet) {
-      speak(`Fun fact about ${foundPlanet}: ${planets[foundPlanet].funFact}`);
-      return;
-    }
-
-    // =========================
-    // PLANET SELECT
-    // =========================
-    if (foundPlanet) {
-      setInfo({ name: foundPlanet, ...planets[foundPlanet] });
-      speak(`${foundPlanet}. ${planets[foundPlanet].desc}`);
-      return;
-    }
-
-    // =========================
-    // ZOOM
-    // =========================
-    if (raw.includes("zoom in")) {
-      const next = Math.min(zoomRef.current + 0.5, 4);
-      zoomRef.current = next;
-      setZoom(next);
-      speak("Zooming in");
-      return;
-    }
-
-    if (raw.includes("zoom out")) {
-      const next = Math.max(zoomRef.current - 0.5, 0.5);
-      zoomRef.current = next;
-      setZoom(next);
-      speak("Zooming out");
-      return;
-    }
-
-    // =========================
-    // PAUSE / RESUME
-    // =========================
     if (raw.includes("pause")) {
-      isPausedRef.current = true;
       setIsPaused(true);
-      speak("Solar system paused");
+      speak("Solar system paused.");
       return;
     }
-
     if (raw.includes("resume")) {
-      isPausedRef.current = false;
       setIsPaused(false);
-      speak("Solar system resumed");
+      speak("Solar system resumed.");
       return;
     }
-
-    // =========================
-    // SLEEP
-    // =========================
     if (raw.includes("sleep") || raw.includes("goodbye")) {
       awakeRef.current = false;
       setAwake(false);
-      speak("Galaxy entering sleep mode. Say hey galaxy to wake me up.");
+      speak("Galaxy sleeping. Say hey galaxy to wake me.");
       return;
     }
 
-    speak("Command not recognized. Try saying a planet name or zoom in.");
+    speak("Command not recognized. Try saying a planet name.");
   });
 
-  // =========================
-  // START VOICE (ALWAYS LISTENING)
-  // =========================
   const startVoice = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      alert("Speech recognition not supported. Please use Google Chrome.");
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      alert("Please use Google Chrome for voice support.");
       return;
     }
-
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.lang = "en-US";
-    recognition.interimResults = false; // ✅ Only fire on final results to avoid duplicate triggers
-
+    if (recognitionRef.current) recognitionRef.current.stop();
+    const r = new SR();
+    r.continuous = true;
+    r.lang = "en-US";
+    r.interimResults = false;
     isListeningRef.current = true;
-
-    recognition.onresult = (e) => {
+    r.onresult = (e) => {
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          const text = e.results[i][0].transcript;
-          handleCommand.current(text);
-        }
+        if (e.results[i].isFinal)
+          handleCommand.current(e.results[i][0].transcript);
       }
     };
-
-    recognition.onerror = (e) => {
-      console.log("Speech error:", e.error);
-      if (e.error === "no-speech" || e.error === "audio-capture") {
-        recognition.stop();
-      }
+    r.onerror = (e) => {
+      if (e.error === "no-speech" || e.error === "audio-capture") r.stop();
     };
-
-    recognition.onend = () => {
-      if (isListeningRef.current) {
+    r.onend = () => {
+      if (isListeningRef.current)
         setTimeout(() => {
           try {
-            recognition.start();
-          } catch (err) {
-            console.log("Restart err:", err);
-          }
+            r.start();
+          } catch {}
         }, 200);
-      }
     };
-
-    recognition.start();
-    recognitionRef.current = recognition;
-
+    r.start();
+    recognitionRef.current = r;
     setListening(true);
-    speak("Galaxy voice system online. Say hey galaxy to activate.");
+    speak("Galaxy voice online. Say hey galaxy to activate.");
   };
 
-  // =========================
-  // STOP VOICE
-  // =========================
   const stopVoice = () => {
     isListeningRef.current = false;
     recognitionRef.current?.stop();
@@ -239,12 +194,9 @@ function App() {
     setListening(false);
     awakeRef.current = false;
     setAwake(false);
-    speak("Voice system offline.");
+    speak("Voice offline.");
   };
 
-  // =========================
-  // AUTO START
-  // =========================
   useEffect(() => {
     startVoice();
     return () => {
@@ -253,53 +205,69 @@ function App() {
     };
   }, []);
 
-  // =========================
-  // Measure control panel height so info panel
-  // can sit directly below it using a CSS var
-  // =========================
-  const controlRef = useRef(null);
-
+  // Measure control panel height
   useEffect(() => {
-    const updateHeight = () => {
+    const update = () => {
       if (controlRef.current) {
-        const h = controlRef.current.offsetHeight;
-        document.documentElement.style.setProperty("--control-h", h + "px");
+        document.documentElement.style.setProperty(
+          "--control-h",
+          controlRef.current.offsetHeight + "px",
+        );
       }
     };
-    updateHeight();
-    const ro = new ResizeObserver(updateHeight);
+    update();
+    const ro = new ResizeObserver(update);
     if (controlRef.current) ro.observe(controlRef.current);
     return () => ro.disconnect();
   }, []);
 
-  // =========================
-  // UI
-  // =========================
   return (
-    <div className="app-container">
-      <ControlPanel
-        ref={controlRef}
-        listening={listening}
-        startVoice={startVoice}
-        stopVoice={stopVoice}
-        zoom={zoom}
-        setZoom={setZoom}
-        isPaused={isPaused}
-        setIsPaused={setIsPaused}
-      />
+    <>
+      {/* Planet focus overlay — full screen, replaces HUD */}
+      {focusPlanet && (
+        <PlanetFocus
+          planet={focusPlanet}
+          onClose={() => setFocusPlanet(null)}
+        />
+      )}
 
-      <InfoPanel info={info} />
+      {/* HUD — always visible unless focus is open */}
+      {!focusPlanet && (
+        <div className="hud-layer">
+          <ControlPanel
+            ref={controlRef}
+            listening={listening}
+            startVoice={startVoice}
+            stopVoice={stopVoice}
+            isPaused={isPaused}
+            setIsPaused={setIsPaused}
+          />
 
-      <div className="status-indicator">
-        {listening
-          ? awake
-            ? "🟢 GALAXY ACTIVE"
-            : "🟡 LISTENING — Say: Hey Galaxy"
-          : "⚫ OFFLINE"}
-      </div>
+          {/* Marker status hint */}
+          <div className="status-pill">
+            {markerFound
+              ? "🟢 Marker detected — tap a planet"
+              : listening
+                ? awake
+                  ? "🟢 GALAXY ACTIVE"
+                  : "🟡 Say: Hey Galaxy"
+                : "⚫ OFFLINE"}
+          </div>
 
-      <ARScene planets={planets} zoom={zoom} isPaused={isPaused} />
-    </div>
+          {/* Tap hint when no marker */}
+          {!markerFound && (
+            <div className="marker-hint">
+              📷 Point camera at <strong>HIRO</strong> marker to see the solar
+              system
+            </div>
+          )}
+
+          {transcript && (
+            <div className="transcript-toast">🎙 {transcript}</div>
+          )}
+        </div>
+      )}
+    </>
   );
 }
 
