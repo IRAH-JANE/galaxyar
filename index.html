@@ -8,9 +8,7 @@
     />
     <title>GalaxyAR 🪐</title>
 
-    <!-- A-Frame FIRST -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <!-- AR.js SECOND -->
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
 
     <style>
@@ -58,16 +56,11 @@
     </style>
   </head>
   <body>
-    <!-- ═══════════════════════════════════════════
-         A-FRAME / AR.JS SCENE — Lives in raw HTML.
-         Do NOT wrap in React — that causes the black screen.
-         ═══════════════════════════════════════════ -->
     <a-scene
       vr-mode-ui="enabled: false"
       renderer="antialias: true; alpha: true; logarithmicDepthBuffer: true;"
       arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;"
     >
-      <!-- Lights -->
       <a-light type="ambient" color="#ffffff" intensity="1.8"></a-light>
       <a-light
         type="directional"
@@ -84,7 +77,6 @@
         decay="2"
       ></a-light>
 
-      <!-- ── HIRO MARKER ── -->
       <a-marker
         id="hiro-marker"
         preset="hiro"
@@ -92,397 +84,391 @@
         cursor="rayOrigin: mouse"
         raycaster="objects: .clickable"
       >
-        <!-- SUN -->
-        <a-sphere
-          id="sun"
-          position="0 0.12 0"
-          radius="0.12"
-          src="/textures/sun.jpg"
-          emissive="#ff6600"
-          emissive-intensity="0.9"
-        >
-        </a-sphere>
-
-        <!-- Sun glow -->
-        <a-sphere
-          position="0 0.12 0"
-          radius="0.19"
-          material="color:#ff8800;opacity:0.12;transparent:true;shader:flat;side:back;"
-        >
-        </a-sphere>
-
-        <!-- ── ORBIT RINGS ── -->
-        <a-torus
-          position="0 0.01 0"
-          radius="0.25"
-          radius-tubular="0.003"
-          segments-tubular="64"
-          rotation="-90 0 0"
-          material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
-        ></a-torus>
-        <a-torus
-          position="0 0.01 0"
-          radius="0.38"
-          radius-tubular="0.003"
-          segments-tubular="64"
-          rotation="-90 0 0"
-          material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
-        ></a-torus>
-        <a-torus
-          position="0 0.01 0"
-          radius="0.52"
-          radius-tubular="0.003"
-          segments-tubular="64"
-          rotation="-90 0 0"
-          material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
-        ></a-torus>
-        <a-torus
-          position="0 0.01 0"
-          radius="0.65"
-          radius-tubular="0.003"
-          segments-tubular="64"
-          rotation="-90 0 0"
-          material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
-        ></a-torus>
-        <a-torus
-          position="0 0.01 0"
-          radius="0.78"
-          radius-tubular="0.003"
-          segments-tubular="64"
-          rotation="-90 0 0"
-          material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
-        ></a-torus>
-        <a-torus
-          position="0 0.01 0"
-          radius="0.88"
-          radius-tubular="0.003"
-          segments-tubular="64"
-          rotation="-90 0 0"
-          material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
-        ></a-torus>
-        <a-torus
-          position="0 0.01 0"
-          radius="0.93"
-          radius-tubular="0.003"
-          segments-tubular="64"
-          rotation="-90 0 0"
-          material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
-        ></a-torus>
-        <a-torus
-          position="0 0.01 0"
-          radius="1.00"
-          radius-tubular="0.003"
-          segments-tubular="64"
-          rotation="-90 0 0"
-          material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
-        ></a-torus>
-
-        <!-- ── PLANETS ── each is an <a-entity> wrapper + clickable sphere inside -->
-
-        <!-- Mercury -->
-        <a-entity
-          id="planet-Mercury"
-          class="planet-orbit"
-          data-dist="0.25"
-          data-speed="0.020"
-          data-angle="0"
-        >
+        <a-entity id="galaxy-view" visible="false">
           <a-sphere
-            class="clickable planet-sphere"
-            data-planet="Mercury"
-            radius="0.030"
-            src="/textures/mercury.jpg"
-            animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:8000;easing:linear;"
-          >
-          </a-sphere>
-          <!-- bigger invisible hit sphere -->
-          <a-sphere
-            class="clickable"
-            data-planet="Mercury"
-            radius="0.06"
-            material="opacity:0;transparent:true;"
-          >
-          </a-sphere>
+            radius="2.5"
+            material="color: #050510; side: back; transparent: true; opacity: 0.9;"
+          ></a-sphere>
           <a-text
-            value="Mercury"
-            position="0 0.07 0"
-            scale="0.06 0.06 0.06"
+            value="The Milky Way Galaxy"
+            position="0 1.5 0"
             align="center"
+            scale="0.6 0.6 0.6"
             color="#ffffff"
-            shader="flat"
-            look-at="[camera]"
-          >
-          </a-text>
+          ></a-text>
         </a-entity>
 
-        <!-- Venus -->
-        <a-entity
-          id="planet-Venus"
-          class="planet-orbit"
-          data-dist="0.38"
-          data-speed="0.016"
-          data-angle="45"
-        >
+        <a-entity id="solar-system-group">
           <a-sphere
-            class="clickable planet-sphere"
-            data-planet="Venus"
-            radius="0.045"
-            src="/textures/venus.jpg"
-            animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:9000;easing:linear;"
+            id="sun"
+            position="0 0.12 0"
+            radius="0.12"
+            src="/textures/sun.jpg"
+            emissive="#ff6600"
+            emissive-intensity="0.9"
           >
           </a-sphere>
-          <a-sphere
-            class="clickable"
-            data-planet="Venus"
-            radius="0.09"
-            material="opacity:0;transparent:true;"
-          >
-          </a-sphere>
-          <a-text
-            value="Venus"
-            position="0 0.09 0"
-            scale="0.06 0.06 0.06"
-            align="center"
-            color="#ffffff"
-            shader="flat"
-            look-at="[camera]"
-          >
-          </a-text>
-        </a-entity>
 
-        <!-- Earth -->
-        <a-entity
-          id="planet-Earth"
-          class="planet-orbit"
-          data-dist="0.52"
-          data-speed="0.012"
-          data-angle="90"
-        >
           <a-sphere
-            class="clickable planet-sphere"
-            data-planet="Earth"
-            radius="0.050"
-            src="/textures/earth.jpg"
-            animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:10000;easing:linear;"
+            position="0 0.12 0"
+            radius="0.19"
+            material="color:#ff8800;opacity:0.12;transparent:true;shader:flat;side:back;"
           >
           </a-sphere>
-          <a-sphere
-            class="clickable"
-            data-planet="Earth"
-            radius="0.10"
-            material="opacity:0;transparent:true;"
-          >
-          </a-sphere>
-          <a-text
-            value="Earth"
-            position="0 0.10 0"
-            scale="0.06 0.06 0.06"
-            align="center"
-            color="#ffffff"
-            shader="flat"
-            look-at="[camera]"
-          >
-          </a-text>
-        </a-entity>
 
-        <!-- Mars -->
-        <a-entity
-          id="planet-Mars"
-          class="planet-orbit"
-          data-dist="0.65"
-          data-speed="0.009"
-          data-angle="135"
-        >
-          <a-sphere
-            class="clickable planet-sphere"
-            data-planet="Mars"
-            radius="0.040"
-            src="/textures/mars.jpg"
-            animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:9000;easing:linear;"
-          >
-          </a-sphere>
-          <a-sphere
-            class="clickable"
-            data-planet="Mars"
-            radius="0.08"
-            material="opacity:0;transparent:true;"
-          >
-          </a-sphere>
-          <a-text
-            value="Mars"
-            position="0 0.08 0"
-            scale="0.06 0.06 0.06"
-            align="center"
-            color="#ffffff"
-            shader="flat"
-            look-at="[camera]"
-          >
-          </a-text>
-        </a-entity>
-
-        <!-- Jupiter -->
-        <a-entity
-          id="planet-Jupiter"
-          class="planet-orbit"
-          data-dist="0.78"
-          data-speed="0.006"
-          data-angle="180"
-        >
-          <a-sphere
-            class="clickable planet-sphere"
-            data-planet="Jupiter"
-            radius="0.090"
-            src="/textures/jupiter.jpg"
-            animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:6000;easing:linear;"
-          >
-          </a-sphere>
-          <a-sphere
-            class="clickable"
-            data-planet="Jupiter"
-            radius="0.15"
-            material="opacity:0;transparent:true;"
-          >
-          </a-sphere>
-          <a-text
-            value="Jupiter"
-            position="0 0.16 0"
-            scale="0.06 0.06 0.06"
-            align="center"
-            color="#ffffff"
-            shader="flat"
-            look-at="[camera]"
-          >
-          </a-text>
-        </a-entity>
-
-        <!-- Saturn -->
-        <a-entity
-          id="planet-Saturn"
-          class="planet-orbit"
-          data-dist="0.88"
-          data-speed="0.005"
-          data-angle="225"
-        >
-          <a-sphere
-            class="clickable planet-sphere"
-            data-planet="Saturn"
-            radius="0.075"
-            src="/textures/saturn.jpg"
-            animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:7000;easing:linear;"
-          >
-          </a-sphere>
-          <!-- Saturn ring -->
           <a-torus
-            radius="0.10"
-            radius-tubular="0.02"
-            segments-tubular="60"
-            segments-radial="6"
-            rotation="80 0 0"
-            material="color:#c8b080;opacity:0.75;transparent:true;roughness:1;side:double;"
-          >
-          </a-torus>
-          <a-sphere
-            class="clickable"
-            data-planet="Saturn"
-            radius="0.13"
-            material="opacity:0;transparent:true;"
-          >
-          </a-sphere>
-          <a-text
-            value="Saturn"
-            position="0 0.16 0"
-            scale="0.06 0.06 0.06"
-            align="center"
-            color="#ffffff"
-            shader="flat"
-            look-at="[camera]"
-          >
-          </a-text>
-        </a-entity>
+            position="0 0.01 0"
+            radius="0.25"
+            radius-tubular="0.003"
+            segments-tubular="64"
+            rotation="-90 0 0"
+            material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
+          ></a-torus>
+          <a-torus
+            position="0 0.01 0"
+            radius="0.38"
+            radius-tubular="0.003"
+            segments-tubular="64"
+            rotation="-90 0 0"
+            material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
+          ></a-torus>
+          <a-torus
+            position="0 0.01 0"
+            radius="0.52"
+            radius-tubular="0.003"
+            segments-tubular="64"
+            rotation="-90 0 0"
+            material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
+          ></a-torus>
+          <a-torus
+            position="0 0.01 0"
+            radius="0.65"
+            radius-tubular="0.003"
+            segments-tubular="64"
+            rotation="-90 0 0"
+            material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
+          ></a-torus>
+          <a-torus
+            position="0 0.01 0"
+            radius="0.78"
+            radius-tubular="0.003"
+            segments-tubular="64"
+            rotation="-90 0 0"
+            material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
+          ></a-torus>
+          <a-torus
+            position="0 0.01 0"
+            radius="0.88"
+            radius-tubular="0.003"
+            segments-tubular="64"
+            rotation="-90 0 0"
+            material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
+          ></a-torus>
+          <a-torus
+            position="0 0.01 0"
+            radius="0.93"
+            radius-tubular="0.003"
+            segments-tubular="64"
+            rotation="-90 0 0"
+            material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
+          ></a-torus>
+          <a-torus
+            position="0 0.01 0"
+            radius="1.00"
+            radius-tubular="0.003"
+            segments-tubular="64"
+            rotation="-90 0 0"
+            material="color:#ffffff;opacity:0.2;transparent:true;shader:flat;"
+          ></a-torus>
 
-        <!-- Uranus -->
-        <a-entity
-          id="planet-Uranus"
-          class="planet-orbit"
-          data-dist="0.93"
-          data-speed="0.004"
-          data-angle="270"
-        >
-          <a-sphere
-            class="clickable planet-sphere"
-            data-planet="Uranus"
-            radius="0.060"
-            src="/textures/uranus.jpg"
-            animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:8500;easing:linear;"
+          <a-entity
+            id="planet-Mercury"
+            class="planet-orbit"
+            data-dist="0.25"
+            data-speed="0.020"
+            data-angle="0"
           >
-          </a-sphere>
-          <a-sphere
-            class="clickable"
-            data-planet="Uranus"
-            radius="0.10"
-            material="opacity:0;transparent:true;"
-          >
-          </a-sphere>
-          <a-text
-            value="Uranus"
-            position="0 0.11 0"
-            scale="0.06 0.06 0.06"
-            align="center"
-            color="#ffffff"
-            shader="flat"
-            look-at="[camera]"
-          >
-          </a-text>
-        </a-entity>
+            <a-sphere
+              class="clickable planet-sphere"
+              data-planet="Mercury"
+              radius="0.030"
+              src="/textures/mercury.jpg"
+              animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:8000;easing:linear;"
+            >
+            </a-sphere>
+            <a-sphere
+              class="clickable"
+              data-planet="Mercury"
+              radius="0.06"
+              material="opacity:0;transparent:true;"
+            >
+            </a-sphere>
+            <a-text
+              value="Mercury"
+              position="0 0.07 0"
+              scale="0.06 0.06 0.06"
+              align="center"
+              color="#ffffff"
+              shader="flat"
+              look-at="[camera]"
+            >
+            </a-text>
+          </a-entity>
 
-        <!-- Neptune -->
-        <a-entity
-          id="planet-Neptune"
-          class="planet-orbit"
-          data-dist="1.00"
-          data-speed="0.003"
-          data-angle="315"
-        >
-          <a-sphere
-            class="clickable planet-sphere"
-            data-planet="Neptune"
-            radius="0.058"
-            src="/textures/neptune.jpg"
-            animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:9500;easing:linear;"
+          <a-entity
+            id="planet-Venus"
+            class="planet-orbit"
+            data-dist="0.38"
+            data-speed="0.016"
+            data-angle="45"
           >
-          </a-sphere>
-          <a-sphere
-            class="clickable"
-            data-planet="Neptune"
-            radius="0.10"
-            material="opacity:0;transparent:true;"
+            <a-sphere
+              class="clickable planet-sphere"
+              data-planet="Venus"
+              radius="0.045"
+              src="/textures/venus.jpg"
+              animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:9000;easing:linear;"
+            >
+            </a-sphere>
+            <a-sphere
+              class="clickable"
+              data-planet="Venus"
+              radius="0.09"
+              material="opacity:0;transparent:true;"
+            >
+            </a-sphere>
+            <a-text
+              value="Venus"
+              position="0 0.09 0"
+              scale="0.06 0.06 0.06"
+              align="center"
+              color="#ffffff"
+              shader="flat"
+              look-at="[camera]"
+            >
+            </a-text>
+          </a-entity>
+
+          <a-entity
+            id="planet-Earth"
+            class="planet-orbit"
+            data-dist="0.52"
+            data-speed="0.012"
+            data-angle="90"
           >
-          </a-sphere>
-          <a-text
-            value="Neptune"
-            position="0 0.11 0"
-            scale="0.06 0.06 0.06"
-            align="center"
-            color="#ffffff"
-            shader="flat"
-            look-at="[camera]"
+            <a-sphere
+              class="clickable planet-sphere"
+              data-planet="Earth"
+              radius="0.050"
+              src="/textures/earth.jpg"
+              animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:10000;easing:linear;"
+            >
+            </a-sphere>
+            <a-sphere
+              class="clickable"
+              data-planet="Earth"
+              radius="0.10"
+              material="opacity:0;transparent:true;"
+            >
+            </a-sphere>
+            <a-text
+              value="Earth"
+              position="0 0.10 0"
+              scale="0.06 0.06 0.06"
+              align="center"
+              color="#ffffff"
+              shader="flat"
+              look-at="[camera]"
+            >
+            </a-text>
+          </a-entity>
+
+          <a-entity
+            id="planet-Mars"
+            class="planet-orbit"
+            data-dist="0.65"
+            data-speed="0.009"
+            data-angle="135"
           >
-          </a-text>
+            <a-sphere
+              class="clickable planet-sphere"
+              data-planet="Mars"
+              radius="0.040"
+              src="/textures/mars.jpg"
+              animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:9000;easing:linear;"
+            >
+            </a-sphere>
+            <a-sphere
+              class="clickable"
+              data-planet="Mars"
+              radius="0.08"
+              material="opacity:0;transparent:true;"
+            >
+            </a-sphere>
+            <a-text
+              value="Mars"
+              position="0 0.08 0"
+              scale="0.06 0.06 0.06"
+              align="center"
+              color="#ffffff"
+              shader="flat"
+              look-at="[camera]"
+            >
+            </a-text>
+          </a-entity>
+
+          <a-entity
+            id="planet-Jupiter"
+            class="planet-orbit"
+            data-dist="0.78"
+            data-speed="0.006"
+            data-angle="180"
+          >
+            <a-sphere
+              class="clickable planet-sphere"
+              data-planet="Jupiter"
+              radius="0.090"
+              src="/textures/jupiter.jpg"
+              animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:6000;easing:linear;"
+            >
+            </a-sphere>
+            <a-sphere
+              class="clickable"
+              data-planet="Jupiter"
+              radius="0.15"
+              material="opacity:0;transparent:true;"
+            >
+            </a-sphere>
+            <a-text
+              value="Jupiter"
+              position="0 0.16 0"
+              scale="0.06 0.06 0.06"
+              align="center"
+              color="#ffffff"
+              shader="flat"
+              look-at="[camera]"
+            >
+            </a-text>
+          </a-entity>
+
+          <a-entity
+            id="planet-Saturn"
+            class="planet-orbit"
+            data-dist="0.88"
+            data-speed="0.005"
+            data-angle="225"
+          >
+            <a-sphere
+              class="clickable planet-sphere"
+              data-planet="Saturn"
+              radius="0.075"
+              src="/textures/saturn.jpg"
+              animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:7000;easing:linear;"
+            >
+            </a-sphere>
+            <a-torus
+              radius="0.10"
+              radius-tubular="0.02"
+              segments-tubular="60"
+              segments-radial="6"
+              rotation="80 0 0"
+              material="color:#c8b080;opacity:0.75;transparent:true;roughness:1;side:double;"
+            >
+            </a-torus>
+            <a-sphere
+              class="clickable"
+              data-planet="Saturn"
+              radius="0.13"
+              material="opacity:0;transparent:true;"
+            >
+            </a-sphere>
+            <a-text
+              value="Saturn"
+              position="0 0.16 0"
+              scale="0.06 0.06 0.06"
+              align="center"
+              color="#ffffff"
+              shader="flat"
+              look-at="[camera]"
+            >
+            </a-text>
+          </a-entity>
+
+          <a-entity
+            id="planet-Uranus"
+            class="planet-orbit"
+            data-dist="0.93"
+            data-speed="0.004"
+            data-angle="270"
+          >
+            <a-sphere
+              class="clickable planet-sphere"
+              data-planet="Uranus"
+              radius="0.060"
+              src="/textures/uranus.jpg"
+              animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:8500;easing:linear;"
+            >
+            </a-sphere>
+            <a-sphere
+              class="clickable"
+              data-planet="Uranus"
+              radius="0.10"
+              material="opacity:0;transparent:true;"
+            >
+            </a-sphere>
+            <a-text
+              value="Uranus"
+              position="0 0.11 0"
+              scale="0.06 0.06 0.06"
+              align="center"
+              color="#ffffff"
+              shader="flat"
+              look-at="[camera]"
+            >
+            </a-text>
+          </a-entity>
+
+          <a-entity
+            id="planet-Neptune"
+            class="planet-orbit"
+            data-dist="1.00"
+            data-speed="0.003"
+            data-angle="315"
+          >
+            <a-sphere
+              class="clickable planet-sphere"
+              data-planet="Neptune"
+              radius="0.058"
+              src="/textures/neptune.jpg"
+              animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:9500;easing:linear;"
+            >
+            </a-sphere>
+            <a-sphere
+              class="clickable"
+              data-planet="Neptune"
+              radius="0.10"
+              material="opacity:0;transparent:true;"
+            >
+            </a-sphere>
+            <a-text
+              value="Neptune"
+              position="0 0.11 0"
+              scale="0.06 0.06 0.06"
+              align="center"
+              color="#ffffff"
+              shader="flat"
+              look-at="[camera]"
+            >
+            </a-text>
+          </a-entity>
         </a-entity>
       </a-marker>
 
-      <!-- AR.js controls the camera — don't add a manual camera entity -->
       <a-entity camera></a-entity>
     </a-scene>
 
-    <!-- React UI mounts here -->
     <div id="ui-root"></div>
 
-    <!-- ══════════════════════════════════════
-         PLANET ORBIT ANIMATION (vanilla JS)
-         Runs independently of React so orbits
-         work even before React mounts.
-         ══════════════════════════════════════ -->
     <script>
       (function () {
         const planets = [
@@ -621,6 +607,40 @@
           }
 
           setupPrecisePlanetClicks();
+
+          // ── Added Instruction: Scroll Zoom Logic ──
+          let zoomLevel = 1;
+          const solarGroup = document.getElementById("solar-system-group");
+          const galaxyView = document.getElementById("galaxy-view");
+
+          window.addEventListener(
+            "wheel",
+            (e) => {
+              // Adjust zoom level based on scroll direction
+              zoomLevel -= e.deltaY * 0.002;
+
+              // Constrain zoom level between 0.2 (zoomed way out) and 4 (zoomed way in on planets)
+              zoomLevel = Math.max(0.2, Math.min(zoomLevel, 4));
+
+              if (zoomLevel < 0.6) {
+                // Zoomed out -> Show Galaxy, Hide Solar System
+                if (galaxyView) galaxyView.setAttribute("visible", "true");
+                if (solarGroup) solarGroup.setAttribute("visible", "false");
+              } else {
+                // Zoomed in -> Show Solar System, Scale up to reveal 3D planets
+                if (galaxyView) galaxyView.setAttribute("visible", "false");
+                if (solarGroup) {
+                  solarGroup.setAttribute("visible", "true");
+                  solarGroup.setAttribute(
+                    "scale",
+                    `${zoomLevel} ${zoomLevel} ${zoomLevel}`,
+                  );
+                }
+              }
+            },
+            { passive: true },
+          );
+          // ──────────────────────────────────────────
         });
 
         // Planet click → dispatch custom event for React to catch
@@ -636,7 +656,6 @@
       })();
     </script>
 
-    <!-- React app -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
