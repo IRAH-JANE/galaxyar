@@ -526,6 +526,101 @@
           } else {
             animate(); // fallback
           }
+
+          function setupPrecisePlanetClicks() {
+            const scene = document.querySelector("a-scene");
+
+            if (!scene) return;
+
+            const start = () => {
+              const canvas = scene.canvas;
+
+              if (!canvas) return;
+
+              let downX = 0;
+              let downY = 0;
+
+              canvas.addEventListener(
+                "pointerdown",
+                (e) => {
+                  downX = e.clientX;
+                  downY = e.clientY;
+                },
+                { passive: true },
+              );
+
+              canvas.addEventListener(
+                "pointerup",
+                (e) => {
+                  const dx = e.clientX - downX;
+                  const dy = e.clientY - downY;
+
+                  // ignore drag
+                  if (Math.sqrt(dx * dx + dy * dy) > 8) return;
+
+                  const camera = scene.camera;
+
+                  if (!camera) return;
+
+                  const rect = canvas.getBoundingClientRect();
+
+                  const ndcX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                  const ndcY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+                  let bestPlanet = null;
+                  let bestDistance = Infinity;
+
+                  planets.forEach((p) => {
+                    const orbitEl = document.getElementById(p.id);
+
+                    if (!orbitEl) return;
+
+                    const sphere = orbitEl.querySelector(".planet-sphere");
+
+                    if (!sphere || !sphere.object3D) return;
+
+                    const pos = new THREE.Vector3();
+
+                    sphere.object3D.getWorldPosition(pos);
+
+                    const projected = pos.clone().project(camera);
+
+                    const distX = projected.x - ndcX;
+                    const distY = projected.y - ndcY;
+
+                    const dist = Math.sqrt(distX * distX + distY * distY);
+
+                    const threshold = 0.08;
+
+                    if (dist < threshold && dist < bestDistance) {
+                      bestDistance = dist;
+
+                      bestPlanet = sphere.getAttribute("data-planet");
+                    }
+                  });
+
+                  if (bestPlanet) {
+                    console.log("Clicked:", bestPlanet);
+
+                    window.dispatchEvent(
+                      new CustomEvent("planet-clicked", {
+                        detail: { name: bestPlanet },
+                      }),
+                    );
+                  }
+                },
+                { passive: true },
+              );
+            };
+
+            if (scene.hasLoaded) {
+              start();
+            } else {
+              scene.addEventListener("loaded", start);
+            }
+          }
+
+          setupPrecisePlanetClicks();
         });
 
         // Planet click → dispatch custom event for React to catch
