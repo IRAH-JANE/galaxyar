@@ -1,199 +1,279 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
-function PlanetFocus({ planet, onClose }) {
-  const sphereRef = useRef(null);
-  const rot = useRef({
-    x: -15,
-    y: 0,
-    dragging: false,
-    lx: 0,
-    ly: 0,
-    vx: 0,
-    vy: 0,
-  });
-  const raf = useRef(null);
+function ordinal(n) {
+  if (n === 0) return "Center of the Solar System";
+  if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`;
 
-  // Spinning globe
-  useEffect(() => {
-    const spin = () => {
-      const r = rot.current;
-      if (!r.dragging) {
-        r.vx *= 0.92;
-        r.vy *= 0.92;
-        r.y += r.vx + 0.22;
-        r.x += r.vy;
-        r.x = Math.max(-55, Math.min(55, r.x));
-      }
-      if (sphereRef.current) {
-        sphereRef.current.style.transform = `rotateX(${r.x}deg) rotateY(${r.y}deg)`;
-      }
-      raf.current = requestAnimationFrame(spin);
-    };
-    spin();
-    return () => cancelAnimationFrame(raf.current);
-  }, []);
+  switch (n % 10) {
+    case 1:
+      return `${n}st`;
+    case 2:
+      return `${n}nd`;
+    case 3:
+      return `${n}rd`;
+    default:
+      return `${n}th`;
+  }
+}
 
-  useEffect(() => {
-    const fn = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", fn);
-    return () => window.removeEventListener("keydown", fn);
-  }, [onClose]);
+function texturePath(texture) {
+  if (!texture) return "";
+  if (texture.startsWith("/")) return texture;
+  return `/${texture}`;
+}
 
-  const onPD = (e) => {
-    const r = rot.current;
-    r.dragging = true;
-    r.lx = e.clientX;
-    r.ly = e.clientY;
-    r.vx = 0;
-    r.vy = 0;
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-  const onPM = (e) => {
-    const r = rot.current;
-    if (!r.dragging) return;
-    const dx = e.clientX - r.lx,
-      dy = e.clientY - r.ly;
-    r.vx = dx * 0.42;
-    r.vy = dy * 0.42;
-    r.y += dx * 0.42;
-    r.x += dy * 0.42;
-    r.x = Math.max(-70, Math.min(70, r.x));
-    r.lx = e.clientX;
-    r.ly = e.clientY;
-  };
-  const onPU = () => {
-    rot.current.dragging = false;
-  };
+function valueOrDash(value) {
+  return value === undefined || value === null || value === "" ? "—" : value;
+}
 
-  const glowColor = planet.color || "#4488ff";
+function FactChip({ label, value, delay = 0 }) {
+  return (
+    <div className="pf3-chip pf3-anim-item" style={{ "--i": String(delay) }}>
+      <span>{label}</span>
+      <strong>{valueOrDash(value)}</strong>
+    </div>
+  );
+}
 
-  const stats = [
-    { icon: "🌍", label: "Gravity", value: planet.gravity },
-    { icon: "🌕", label: "Moons", value: String(planet.moons) },
-    { icon: "📏", label: "Diameter", value: planet.diameter },
-    { icon: "🌡", label: "Temperature", value: planet.temperature },
-    { icon: "☁️", label: "Atmosphere", value: planet.atmosphere },
-    { icon: "🕒", label: "Day Length", value: planet.dayLength },
-    { icon: "📅", label: "Year Length", value: planet.yearLength },
-  ];
+function InfoRow({ label, value, delay = 0 }) {
+  return (
+    <div className="pf3-row pf3-anim-item" style={{ "--i": String(delay) }}>
+      <span>{label}</span>
+      <p>{valueOrDash(value)}</p>
+    </div>
+  );
+}
+
+function PlanetViewer({ planet }) {
+  const texture = useMemo(() => texturePath(planet.texture), [planet.texture]);
+  const isSun = planet.name === "Sun";
+  const hasRings = Boolean(planet.rings);
 
   return (
-    <div className="focus-overlay">
-      {/* ════ LEFT — 3D Globe ════ */}
-      <div className="focus-left">
-        {/* Back button */}
-        <button className="focus-back-btn" onClick={onClose}>
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M9 2L4 7L9 12"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Back to AR
-        </button>
+    <div
+      className={`pf3-viewer ${isSun ? "pf3-viewer--sun" : ""}`}
+      style={{
+        "--planet-color": planet.color || "#7ca0ff",
+        "--planet-glow":
+          planet.glowColor || planet.color || (isSun ? "#ff9a2f" : "#7ca0ff"),
+        "--planet-texture": texture ? `url("${texture}")` : "none",
+      }}
+    >
+      <div className="pf3-portal-flare" />
+      <div className="pf3-stars" />
+      <div className="pf3-orbit pf3-orbit-1" />
+      <div className="pf3-orbit pf3-orbit-2" />
+      <div className="pf3-orbit pf3-orbit-3" />
 
-        {/* Space background radial glow */}
-        <div
-          className="focus-space-bg"
-          style={{
-            background: `radial-gradient(ellipse at 50% 60%, ${glowColor}22 0%, transparent 65%)`,
-          }}
-        />
+      <div className="pf3-planet-stage">
+        {hasRings && <div className="pf3-rings pf3-rings-back" />}
 
-        {/* 3D spinning globe */}
-        <div
-          className="focus-globe-scene"
-          onPointerDown={onPD}
-          onPointerMove={onPM}
-          onPointerUp={onPU}
-          onPointerLeave={onPU}
-          style={{ cursor: "grab" }}
-        >
-          {/* Atmosphere ring */}
-          <div
-            className="focus-atmo"
-            style={{ boxShadow: `0 0 90px 35px ${glowColor}44` }}
-          />
-
-          {/* The globe itself */}
-          <div
-            ref={sphereRef}
-            className="focus-globe"
-            style={{
-              backgroundImage: `url(${planet.texture})`,
-              boxShadow: `
-                inset -35px -18px 70px rgba(0,0,0,0.85),
-                inset 18px 9px 45px rgba(255,255,255,0.04),
-                0 0 70px 15px ${glowColor}33
-              `,
-            }}
-          />
+        <div className={`pf3-globe ${isSun ? "pf3-globe--sun" : ""}`}>
+          <div className="pf3-globe-shine" />
+          <div className="pf3-globe-shade" />
         </div>
 
-        <p className="focus-drag-hint">🖱 Drag to rotate</p>
-
-        {/* Planet name */}
-        <h1 className="focus-planet-name" style={{ color: glowColor }}>
-          {planet.name}
-        </h1>
-        <p className="focus-planet-desc">{planet.desc}</p>
+        {hasRings && <div className="pf3-rings pf3-rings-front" />}
       </div>
 
-      {/* ════ RIGHT — Info ════ */}
-      <div className="focus-right">
-        <div className="focus-right-scroll">
-          <p className="focus-section-tag">PLANET STATS</p>
+      <div className="pf3-viewer-label">3D Planet Preview</div>
+    </div>
+  );
+}
 
-          <div className="focus-stats-grid">
-            {stats.map(({ icon, label, value }) => (
-              <div key={label} className="focus-stat-card">
-                <div className="focus-stat-icon">{icon}</div>
-                <div className="focus-stat-label">{label}</div>
-                <div className="focus-stat-value">{value}</div>
-              </div>
-            ))}
-          </div>
+function PlanetFocus({ planet, onClose }) {
+  const [closing, setClosing] = useState(false);
 
-          {planet.nasaFact && (
-            <>
-              <p className="focus-section-tag" style={{ marginTop: 22 }}>
-                NASA FACT
-              </p>
-              <div className="focus-fact nasa-fact">
-                <span className="focus-fact-emoji">🚀</span>
-                <p>{planet.nasaFact}</p>
-              </div>
-            </>
-          )}
+  useEffect(() => {
+    setClosing(false);
+  }, [planet.name]);
 
-          {planet.funFact && (
-            <>
-              <p className="focus-section-tag" style={{ marginTop: 14 }}>
-                FUN FACT
-              </p>
-              <div className="focus-fact fun-fact">
-                <span className="focus-fact-emoji">🌟</span>
-                <p>{planet.funFact}</p>
-              </div>
-            </>
-          )}
+  function handleClose() {
+    setClosing(true);
+    window.setTimeout(() => {
+      onClose();
+    }, 320);
+  }
 
-          {/* Bottom back — thumb reachable on mobile */}
-          <button className="focus-back-bottom" onClick={onClose}>
+  const positionText =
+    planet.orderFromSun === 0
+      ? "Center star of the Solar System"
+      : `${ordinal(planet.orderFromSun)} planet from the Sun`;
+
+  const headline =
+    planet.name === "Sun"
+      ? "The star that powers and holds the Solar System together."
+      : `${planet.name} is the ${ordinal(planet.orderFromSun)} planet from the Sun.`;
+
+  const expandedIntro =
+    planet.longDesc ||
+    `${planet.desc} This page shows its physical properties, motion, structure, exploration history, and important facts that make it unique in the Solar System.`;
+
+  return (
+    <div
+      className={`planet-focus-overlay pf3-page ${
+        closing ? "pf3-closing" : "pf3-opening"
+      }`}
+    >
+      <div className="pf3-cinematic-bg" />
+
+      <div className="pf3-frame">
+        <header className="pf3-topbar pf3-anim-card" style={{ "--i": "0" }}>
+          <button className="pf3-back" onClick={handleClose}>
             ← Back to Solar System
           </button>
-        </div>
+        </header>
+
+        <main className="pf3-shell">
+          <section className="pf3-left">
+            <PlanetViewer planet={planet} />
+
+            <div className="pf3-hero-card pf3-anim-card" style={{ "--i": "1" }}>
+              <div className="pf3-kicker">{positionText}</div>
+              <h1>{planet.name}</h1>
+              <p className="pf3-headline">{headline}</p>
+              <p className="pf3-desc">{expandedIntro}</p>
+
+              <div className="pf3-tags">
+                <span>{planet.type}</span>
+                <span>{positionText}</span>
+                {planet.rings && <span>Ring System</span>}
+              </div>
+            </div>
+          </section>
+
+          <section className="pf3-right">
+            <div className="pf3-panel pf3-anim-card" style={{ "--i": "2" }}>
+              <div className="pf3-section-title">Quick Facts</div>
+
+              <div className="pf3-chip-grid">
+                <FactChip label="Gravity" value={planet.gravity} delay={1} />
+                <FactChip label="Moons" value={planet.moons} delay={2} />
+                <FactChip label="Diameter" value={planet.diameter} delay={3} />
+                <FactChip
+                  label="Temperature"
+                  value={planet.temperature}
+                  delay={4}
+                />
+                <FactChip
+                  label="Distance"
+                  value={planet.distanceFromSun}
+                  delay={5}
+                />
+                <FactChip
+                  label="Orbital Speed"
+                  value={planet.orbitalSpeed}
+                  delay={6}
+                />
+                <FactChip
+                  label="Day Length"
+                  value={planet.dayLength}
+                  delay={7}
+                />
+                <FactChip
+                  label="Year Length"
+                  value={planet.yearLength}
+                  delay={8}
+                />
+              </div>
+            </div>
+
+            <div className="pf3-info-grid">
+              <div className="pf3-panel pf3-anim-card" style={{ "--i": "3" }}>
+                <div className="pf3-section-title">Scientific Profile</div>
+
+                <div className="pf3-row-list">
+                  <InfoRow label="Type" value={planet.type} delay={1} />
+                  <InfoRow label="Position" value={positionText} delay={2} />
+                  <InfoRow label="Age" value={planet.age} delay={3} />
+                  <InfoRow
+                    label="Discovered"
+                    value={planet.discoveredBy}
+                    delay={4}
+                  />
+                  <InfoRow label="Mass" value={planet.mass} delay={5} />
+                  <InfoRow
+                    label="Escape Velocity"
+                    value={planet.escapeVelocity}
+                    delay={6}
+                  />
+                  <InfoRow
+                    label="Axial Tilt"
+                    value={planet.axialTilt}
+                    delay={7}
+                  />
+                  <InfoRow
+                    label="Magnetic Field"
+                    value={planet.magneticField}
+                    delay={8}
+                  />
+                  <InfoRow
+                    label="Atmosphere"
+                    value={planet.atmosphere}
+                    delay={9}
+                  />
+                </div>
+              </div>
+
+              <div className="pf3-panel pf3-anim-card" style={{ "--i": "4" }}>
+                <div className="pf3-section-title">Deep Details</div>
+
+                <div className="pf3-row-list">
+                  <InfoRow
+                    label="Composition"
+                    value={planet.composition}
+                    delay={1}
+                  />
+                  <InfoRow label="Surface" value={planet.surface} delay={2} />
+                  <InfoRow label="Rotation" value={planet.rotation} delay={3} />
+                  <InfoRow
+                    label="Main Moons"
+                    value={planet.mainMoons}
+                    delay={4}
+                  />
+                  <InfoRow
+                    label="Known For"
+                    value={planet.knownFor}
+                    delay={5}
+                  />
+                  <InfoRow
+                    label="Notable Feature"
+                    value={planet.notableFeature}
+                    delay={6}
+                  />
+                  <InfoRow
+                    label="Exploration"
+                    value={planet.exploration}
+                    delay={7}
+                  />
+                  <InfoRow
+                    label="Why Important"
+                    value={planet.whyImportant}
+                    delay={8}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pf3-story-grid">
+              <div
+                className="pf3-panel pf3-story pf3-nasa pf3-anim-card"
+                style={{ "--i": "5" }}
+              >
+                <div className="pf3-section-title">NASA Fact</div>
+                <p>{valueOrDash(planet.nasaFact)}</p>
+              </div>
+
+              <div
+                className="pf3-panel pf3-story pf3-fun pf3-anim-card"
+                style={{ "--i": "6" }}
+              >
+                <div className="pf3-section-title">Fun Fact</div>
+                <p>{valueOrDash(planet.funFact)}</p>
+              </div>
+            </div>
+          </section>
+        </main>
       </div>
     </div>
   );

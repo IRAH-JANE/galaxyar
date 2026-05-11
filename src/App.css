@@ -1,5 +1,6 @@
 /* =====================================================
    App.css — GalaxyAR UI
+   Clean Final Version — No Duplicate Planet Detail Patches
    ===================================================== */
 
 :root {
@@ -8,15 +9,23 @@
   --panel-w: clamp(170px, 18vw, 255px);
   --radius: 14px;
   --accent: #4f9fff;
+
   --f-xs: clamp(9px, 0.72vw, 11px);
   --f-sm: clamp(10px, 0.85vw, 13px);
   --f-md: clamp(12px, 1vw, 15px);
-  --f-xl: clamp(20px, 2.2vw, 30px);
+
   --glass: rgba(6, 8, 20, 0.9);
   --border: rgba(255, 255, 255, 0.09);
+
+  /* Planet detail side spacing.
+     Increase for wider side margins, decrease for more content width. */
+  --planet-detail-side-space: clamp(56px, 5vw, 96px);
 }
 
-/* ── HUD layer ─────────────────────────────────── */
+/* =====================================================
+   HUD LAYER
+   ===================================================== */
+
 .hud-layer {
   position: fixed;
   inset: 0;
@@ -24,7 +33,10 @@
   pointer-events: none;
 }
 
-/* ── Control panel ─────────────────────────────── */
+/* =====================================================
+   CONTROL PANEL
+   ===================================================== */
+
 .ctrl-panel {
   position: absolute;
   top: var(--gap);
@@ -43,6 +55,7 @@
   overflow-y: auto;
   scrollbar-width: none;
 }
+
 .ctrl-panel::-webkit-scrollbar {
   display: none;
 }
@@ -56,6 +69,7 @@
 }
 
 .ctrl-btn {
+  appearance: none;
   display: block;
   width: 100%;
   padding: 8px 12px;
@@ -68,21 +82,28 @@
   font-weight: 600;
   cursor: pointer;
   text-align: left;
-  transition: background 0.18s;
+  transition:
+    background 0.18s,
+    transform 0.18s;
   pointer-events: all;
 }
+
 .ctrl-btn:hover {
   background: rgba(255, 255, 255, 0.14);
 }
+
 .ctrl-btn:active {
   background: rgba(255, 255, 255, 0.2);
+  transform: translateY(1px);
 }
+
 .ctrl-btn--subtle {
   background: transparent;
   border-color: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.45);
   font-size: var(--f-xs);
 }
+
 .ctrl-btn--subtle:hover {
   color: rgba(255, 255, 255, 0.8);
   background: rgba(255, 255, 255, 0.06);
@@ -96,6 +117,7 @@
   flex-direction: column;
   gap: 4px;
 }
+
 .ctrl-cmd {
   font-size: var(--f-xs);
   color: rgba(255, 255, 255, 0.45);
@@ -103,12 +125,16 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   line-height: 1.5;
 }
+
 .ctrl-cmd strong {
   color: rgba(255, 255, 255, 0.78);
   display: block;
 }
 
-/* ── Status pill ───────────────────────────────── */
+/* =====================================================
+   STATUS / HINTS
+   ===================================================== */
+
 .status-pill {
   position: absolute;
   top: var(--gap);
@@ -125,7 +151,6 @@
   pointer-events: none;
 }
 
-/* ── Marker hint ───────────────────────────────── */
 .marker-hint {
   position: absolute;
   bottom: 36px;
@@ -142,11 +167,33 @@
   pointer-events: none;
   text-align: center;
 }
+
 .marker-hint strong {
   color: #fff;
 }
 
-/* ── Voice transcript toast ────────────────────── */
+.interaction-tip {
+  position: absolute;
+  bottom: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 22px;
+  border-radius: 24px;
+  background: rgba(11, 20, 43, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(94, 155, 255, 0.18);
+  color: rgba(235, 245, 255, 0.9);
+  font-size: var(--f-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  text-align: center;
+}
+
+/* =====================================================
+   VOICE UI
+   ===================================================== */
+
 .transcript-toast {
   position: absolute;
   bottom: 80px;
@@ -164,295 +211,1075 @@
   pointer-events: none;
   animation: toastIn 0.25s ease;
 }
+
 @keyframes toastIn {
   from {
     opacity: 0;
     transform: translateX(-50%) translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
 }
 
-/* ═══════════════════════════════════════════════
-   PLANET FOCUS — full-screen split layout
-   Left = spinning 3D globe   Right = info panel
-   ═══════════════════════════════════════════════ */
-.focus-overlay {
+.voice-answer-card {
+  position: absolute;
+  top: calc(var(--gap) + var(--control-h, 220px) + 10px);
+  left: var(--gap);
+  width: var(--panel-w);
+  padding: 13px 14px;
+  border-radius: var(--radius);
+  background: rgba(6, 8, 20, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(79, 159, 255, 0.22);
+  color: rgba(255, 255, 255, 0.85);
+  z-index: 201;
+  pointer-events: all;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+  animation: toastIn 0.25s ease;
+}
+
+.voice-answer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.voice-answer-label {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: rgba(79, 159, 255, 0.75);
+}
+
+.voice-answer-close {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+}
+
+.voice-answer-close:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.voice-answer-card h3 {
+  font-size: var(--f-md);
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.voice-answer-card p {
+  font-size: var(--f-sm);
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.66);
+}
+
+/* =====================================================
+   QUIZ MODE
+   ===================================================== */
+
+.quiz-overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  display: flex;
-  background: linear-gradient(135deg, #04060f 0%, #080c1a 100%);
-  animation: focusIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background:
+    radial-gradient(
+      circle at 50% 30%,
+      rgba(79, 159, 255, 0.14),
+      transparent 38%
+    ),
+    linear-gradient(135deg, rgba(4, 6, 15, 0.96), rgba(8, 12, 26, 0.98));
   pointer-events: all;
+  animation: focusIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
 @keyframes focusIn {
   from {
     opacity: 0;
     transform: scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
   }
 }
 
-/* ── LEFT half ─────────────────────────────────── */
-.focus-left {
-  flex: 0 0 48%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 28px 24px 24px;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+.quiz-panel {
   position: relative;
-  overflow: hidden;
-  user-select: none;
-  touch-action: none;
+  width: min(520px, 94vw);
+  padding: 28px;
+  border-radius: 22px;
+  background: rgba(6, 8, 20, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.55);
 }
 
-/* Radial space glow behind globe */
-.focus-space-bg {
+.quiz-close {
+  appearance: none;
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-/* Back button — top-left */
-.focus-back-btn {
-  position: absolute;
-  top: 18px;
-  left: 18px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 15px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 20px;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 13px;
-  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 20px;
   cursor: pointer;
-  transition:
-    background 0.18s,
-    color 0.18s;
-  pointer-events: all;
-  z-index: 10;
 }
-.focus-back-btn:hover {
+
+.quiz-close:hover {
   background: rgba(255, 255, 255, 0.14);
   color: #fff;
 }
 
-/* Globe container */
-.focus-globe-scene {
-  position: relative;
-  width: clamp(200px, 30vw, 340px);
-  height: clamp(200px, 30vw, 340px);
-  perspective: 900px;
-  margin-bottom: 22px;
-  z-index: 1;
-}
-
-.focus-atmo {
-  position: absolute;
-  inset: -14px;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.focus-globe {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background-size: 200% 100%;
-  background-repeat: repeat-x;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-
-.focus-drag-hint {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.22);
-  letter-spacing: 0.04em;
-  margin-bottom: 18px;
-  z-index: 1;
-}
-
-.focus-planet-name {
-  font-size: clamp(28px, 4.5vw, 52px);
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  text-align: center;
-  line-height: 1;
-  margin-bottom: 10px;
-  z-index: 1;
-}
-
-.focus-planet-desc {
-  font-size: clamp(12px, 0.95vw, 14px);
-  color: rgba(255, 255, 255, 0.42);
-  text-align: center;
-  max-width: 320px;
-  line-height: 1.65;
-  z-index: 1;
-}
-
-/* ── RIGHT half ─────────────────────────────────── */
-.focus-right {
-  flex: 1;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
-}
-.focus-right::-webkit-scrollbar {
-  width: 4px;
-}
-.focus-right::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-.focus-right-scroll {
-  padding: 32px 28px 28px;
-}
-
-.focus-section-tag {
+.quiz-kicker {
   font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  color: rgba(255, 255, 255, 0.25);
-  text-transform: uppercase;
-  margin-bottom: 12px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: rgba(79, 159, 255, 0.85);
+  margin-bottom: 8px;
 }
 
-/* Stats — 2-column grid */
-.focus-stats-grid {
+.quiz-progress {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.42);
+  margin-bottom: 16px;
+}
+
+.quiz-panel h2 {
+  font-size: clamp(22px, 3vw, 34px);
+  line-height: 1.15;
+  margin-bottom: 20px;
+}
+
+.quiz-options {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
-.focus-stat-card {
-  padding: 13px 14px;
+
+.quiz-option,
+.quiz-next,
+.quiz-secondary {
+  appearance: none;
+  width: 100%;
+  padding: 13px 15px;
   border-radius: 13px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.focus-stat-icon {
-  font-size: 18px;
-}
-.focus-stat-label {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.28);
-}
-.focus-stat-value {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.85);
-  line-height: 1.35;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
 }
 
-/* Fact cards */
-.focus-fact {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 14px 16px;
-  border-radius: 13px;
+.quiz-option:hover,
+.quiz-next:hover,
+.quiz-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
-.nasa-fact {
-  background: rgba(79, 159, 255, 0.07);
-  border: 1px solid rgba(79, 159, 255, 0.16);
+
+.quiz-option.correct {
+  background: rgba(76, 175, 80, 0.2);
+  border-color: rgba(76, 175, 80, 0.45);
 }
-.fun-fact {
-  background: rgba(167, 139, 250, 0.07);
-  border: 1px solid rgba(167, 139, 250, 0.16);
+
+.quiz-option.wrong {
+  background: rgba(244, 67, 54, 0.2);
+  border-color: rgba(244, 67, 54, 0.45);
 }
-.focus-fact-emoji {
-  font-size: 20px;
-  flex-shrink: 0;
-  margin-top: 1px;
+
+.quiz-result {
+  margin-top: 16px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
 }
-.focus-fact p {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.65);
+
+.quiz-next {
+  margin-top: 12px;
+  text-align: center;
+  background: rgba(79, 159, 255, 0.16);
+  border-color: rgba(79, 159, 255, 0.32);
+}
+
+.quiz-secondary {
+  margin-top: 10px;
+  text-align: center;
+  background: transparent;
+}
+
+.quiz-score {
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 18px;
   line-height: 1.6;
 }
 
-/* Bottom back button */
-.focus-back-bottom {
-  display: block;
-  width: 100%;
-  margin-top: 24px;
-  padding: 13px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: center;
-  transition:
-    background 0.18s,
-    color 0.18s;
+/* =====================================================
+   GLOBAL UI LOCK WHEN PLANET DETAIL IS OPEN
+   ===================================================== */
+
+body.modal-open {
+  overflow: hidden;
 }
-.focus-back-bottom:hover {
-  background: rgba(255, 255, 255, 0.09);
+
+body.modal-open #planet-hover-label,
+body.modal-open #bottom-label,
+body.modal-open #planet-focus-label,
+body.modal-open .transcript-toast {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  display: none !important;
+}
+
+/* =====================================================
+   PLANET FOCUS — FINAL CLEANED LAPTOP-FIRST DESIGN
+   ===================================================== */
+
+.planet-focus-overlay.pf3-page {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  scrollbar-width: none;
+  pointer-events: auto;
   color: #fff;
+  background:
+    radial-gradient(
+      circle at 16% 18%,
+      rgba(78, 142, 255, 0.13),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 76% 16%,
+      rgba(255, 184, 90, 0.1),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 72% 78%,
+      rgba(152, 98, 255, 0.1),
+      transparent 24%
+    ),
+    linear-gradient(135deg, #020611 0%, #040916 50%, #02040a 100%);
 }
 
-/* ═══ RESPONSIVE ══════════════════════════════════ */
+.planet-focus-overlay.pf3-page::-webkit-scrollbar {
+  display: none;
+}
 
-/* Tablet */
-@media (max-width: 900px) {
-  .focus-left {
-    flex: 0 0 44%;
-    padding: 24px 16px 20px;
+.planet-focus-overlay.pf3-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.22) 1px, transparent 1px),
+    radial-gradient(circle, rgba(127, 177, 255, 0.11) 1px, transparent 1px);
+  background-size:
+    120px 120px,
+    180px 180px;
+  background-position:
+    0 0,
+    52px 64px;
+}
+
+.pf3-frame {
+  width: calc(100vw - (var(--planet-detail-side-space) * 2));
+  height: calc(100vh - 14px);
+  min-height: 0;
+  margin: 7px auto;
+  padding-bottom: 0;
+  display: grid;
+  grid-template-rows: 34px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.pf3-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+button.pf3-back,
+.pf3-back {
+  appearance: none;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 31px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(145, 180, 255, 0.22);
+  background: rgba(8, 14, 30, 0.86);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 12.2px;
+  font-weight: 850;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+button.pf3-back:hover,
+.pf3-back:hover {
+  background: rgba(18, 30, 62, 0.95);
+  border-color: rgba(145, 180, 255, 0.38);
+}
+
+.pf3-topbar-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 29px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(8, 14, 30, 0.44);
+  border: 1px solid rgba(145, 180, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  min-width: 0;
+}
+
+.pf3-topbar-label {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pf3-topbar-meta strong {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.pf3-shell {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.pf3-left {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.pf3-right {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 13px;
+  align-items: start;
+}
+
+.pf3-viewer,
+.pf3-hero-card,
+.pf3-panel {
+  position: relative;
+  border-radius: 20px;
+  background: linear-gradient(
+    180deg,
+    rgba(12, 20, 43, 0.9),
+    rgba(6, 11, 24, 0.96)
+  );
+  border: 1px solid rgba(145, 180, 255, 0.1);
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.pf3-viewer {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  height: 232px;
+  min-height: 232px;
+  background:
+    radial-gradient(
+      circle at 50% 54%,
+      color-mix(in srgb, var(--planet-glow) 22%, transparent),
+      transparent 45%
+    ),
+    linear-gradient(180deg, rgba(11, 19, 42, 0.92), rgba(4, 8, 18, 0.98));
+}
+
+.pf3-stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.85) 1px, transparent 1px),
+    radial-gradient(circle, rgba(120, 170, 255, 0.55) 1px, transparent 1px);
+  background-size:
+    88px 88px,
+    135px 135px;
+  background-position:
+    0 0,
+    36px 52px;
+}
+
+.pf3-orbit {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(145, 180, 255, 0.12);
+  transform: rotateX(72deg) rotateZ(-12deg);
+}
+
+.pf3-orbit-1 {
+  width: 72%;
+  height: 72%;
+}
+
+.pf3-orbit-2 {
+  width: 88%;
+  height: 88%;
+  border-color: rgba(255, 190, 100, 0.1);
+}
+
+.pf3-orbit-3 {
+  width: 54%;
+  height: 54%;
+  border-color: rgba(170, 120, 255, 0.1);
+}
+
+.pf3-planet-stage {
+  position: relative;
+  width: 158px;
+  height: 158px;
+  display: grid;
+  place-items: center;
+  transform: translateY(-4px);
+  filter: drop-shadow(
+    0 0 40px color-mix(in srgb, var(--planet-glow) 36%, transparent)
+  );
+}
+
+.pf3-globe {
+  position: relative;
+  width: 138px;
+  height: 138px;
+  border-radius: 50%;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      rgba(255, 255, 255, 0.18),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      color-mix(in srgb, var(--planet-color) 88%, #0a1426 12%),
+      color-mix(in srgb, var(--planet-color) 58%, #050a14 42%)
+    );
+  box-shadow:
+    inset -32px -18px 55px rgba(0, 0, 0, 0.38),
+    inset 18px 8px 28px rgba(255, 255, 255, 0.06),
+    0 0 70px color-mix(in srgb, var(--planet-glow) 34%, transparent);
+}
+
+.pf3-globe::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-image: var(--planet-texture);
+  background-repeat: repeat-x;
+  background-size: 200% 100%;
+  background-position: 0% center;
+  opacity: 0.92;
+  mix-blend-mode: soft-light;
+  animation: pf3Spin 18s linear infinite;
+}
+
+.pf3-globe--sun {
+  box-shadow:
+    inset -18px -12px 34px rgba(128, 42, 0, 0.15),
+    0 0 95px rgba(255, 166, 45, 0.68),
+    0 0 150px rgba(255, 118, 0, 0.26);
+}
+
+.pf3-globe--sun::before {
+  opacity: 0.95;
+  mix-blend-mode: screen;
+  animation-duration: 12s;
+}
+
+.pf3-globe-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 24%,
+    rgba(255, 255, 255, 0.22),
+    transparent 18%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.pf3-viewer--sun .pf3-planet-stage {
+  width: 168px;
+  height: 168px;
+  transform: translateY(-8px);
+}
+
+.pf3-viewer--sun .pf3-globe {
+  width: 150px;
+  height: 150px;
+}
+
+.pf3-globe-shade {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 34% 28%,
+      transparent 0 34%,
+      rgba(0, 0, 0, 0.05) 52%,
+      rgba(0, 0, 0, 0.22) 76%,
+      rgba(0, 0, 0, 0.4) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.03) 0 32%,
+      transparent 46%,
+      rgba(0, 0, 0, 0.08) 70%,
+      rgba(0, 0, 0, 0.28) 100%
+    );
+  pointer-events: none;
+  z-index: 3;
+}
+
+.pf3-rings {
+  position: absolute;
+  width: 128%;
+  height: 42%;
+  border-radius: 50%;
+  border: 13px solid rgba(230, 210, 150, 0.42);
+  transform: rotateX(72deg) rotateZ(-17deg);
+  pointer-events: none;
+}
+
+.pf3-rings-back {
+  clip-path: inset(0 0 50% 0);
+  opacity: 0.44;
+}
+
+.pf3-rings-front {
+  clip-path: inset(50% 0 0 0);
+  opacity: 0.86;
+}
+
+.pf3-viewer-label {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  z-index: 5;
+}
+
+@keyframes pf3Spin {
+  from {
+    background-position: 0% center;
   }
-  .focus-right-scroll {
-    padding: 24px 20px 20px;
-  }
-  .focus-stats-grid {
-    gap: 8px;
+
+  to {
+    background-position: 200% center;
   }
 }
 
-/* Mobile — stack vertically */
-@media (max-width: 600px) {
-  .focus-overlay {
-    flex-direction: column;
-    overflow-y: auto;
+.pf3-hero-card {
+  padding: 12px 14px;
+  overflow: hidden;
+}
+
+.pf3-kicker {
+  margin-bottom: 6px;
+  color: color-mix(in srgb, var(--planet-color, #8aa8ff) 72%, white);
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pf3-hero-card h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(36px, 3.2vw, 50px);
+  line-height: 0.95;
+  font-weight: 950;
+}
+
+.pf3-headline {
+  margin: 8px 0 6px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.32;
+}
+
+.pf3-desc {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 11.5px;
+  line-height: 1.45;
+  text-align: justify;
+  text-justify: inter-word;
+  word-spacing: normal;
+}
+
+.pf3-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.pf3-tags span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(82, 130, 255, 0.12);
+  border: 1px solid rgba(130, 165, 255, 0.16);
+  color: rgba(231, 238, 255, 0.9);
+  font-size: 8.5px;
+  font-weight: 850;
+}
+
+.pf3-panel {
+  padding: 12px 14px;
+}
+
+.pf3-section-title {
+  margin-bottom: 9px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 10.5px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.pf3-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.pf3-chip {
+  min-height: 48px;
+  padding: 8px 10px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(145, 180, 255, 0.08);
+}
+
+.pf3-chip span {
+  display: block;
+  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 8.5px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.pf3-chip strong {
+  display: block;
+  color: #fff;
+  font-size: 11.8px;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.pf3-info-grid {
+  height: auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 13px;
+  align-items: start;
+}
+
+.pf3-info-grid .pf3-panel {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+
+.pf3-row-list {
+  display: grid;
+  gap: 7px;
+}
+
+.pf3-row {
+  display: grid;
+  grid-template-columns: 126px 1fr;
+  gap: 11px;
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.032);
+  border: 1px solid rgba(145, 180, 255, 0.075);
+  align-items: center;
+}
+
+.pf3-row span {
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 8.5px;
+  font-weight: 950;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.pf3-row p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 11.3px;
+  line-height: 1.28;
+  text-align: left;
+  text-justify: auto;
+  word-spacing: normal;
+}
+
+.pf3-story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 13px;
+  align-items: stretch;
+}
+
+.pf3-story {
+  min-height: 58px;
+}
+
+.pf3-story p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 11.5px;
+  line-height: 1.35;
+  text-align: left;
+  word-spacing: normal;
+}
+
+.pf3-nasa {
+  background: linear-gradient(
+    180deg,
+    rgba(28, 55, 105, 0.42),
+    rgba(7, 12, 26, 0.94)
+  );
+}
+
+.pf3-fun {
+  background: linear-gradient(
+    180deg,
+    rgba(72, 48, 110, 0.42),
+    rgba(7, 12, 26, 0.94)
+  );
+}
+
+/* =====================================================
+   RESPONSIVE — PLANET DETAIL
+   ===================================================== */
+
+@media (max-width: 1450px) and (min-width: 1181px) {
+  :root {
+    --planet-detail-side-space: 72px;
   }
-  .focus-left {
-    flex: none;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 64px 16px 20px;
+
+  .pf3-shell {
+    grid-template-columns: 315px minmax(0, 1fr);
+    gap: 14px;
   }
-  .focus-globe-scene {
-    width: 170px;
-    height: 170px;
-  }
-  .focus-right-scroll {
-    padding: 18px 16px;
-  }
-  .focus-stats-grid {
-    grid-template-columns: 1fr 1fr;
+}
+
+@media (max-height: 760px) and (min-width: 1181px) {
+  .pf3-frame {
+    height: calc(100vh - 10px);
+    margin: 5px auto;
+    grid-template-rows: 32px minmax(0, 1fr);
     gap: 7px;
   }
 
-  /* HUD adjustments */
+  .pf3-left {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .pf3-right {
+    gap: 10px;
+  }
+
+  .pf3-viewer {
+    height: 215px;
+    min-height: 215px;
+  }
+
+  .pf3-planet-stage {
+    width: 148px;
+    height: 148px;
+    transform: translateY(-4px);
+  }
+
+  .pf3-globe {
+    width: 128px;
+    height: 128px;
+  }
+
+  .pf3-viewer--sun .pf3-planet-stage {
+    width: 158px;
+    height: 158px;
+    transform: translateY(-7px);
+  }
+
+  .pf3-viewer--sun .pf3-globe {
+    width: 138px;
+    height: 138px;
+  }
+
+  .pf3-panel,
+  .pf3-hero-card {
+    padding: 10px 12px;
+  }
+
+  .pf3-chip {
+    min-height: 43px;
+    padding: 6px 8px;
+  }
+
+  .pf3-row-list {
+    gap: 5px;
+  }
+
+  .pf3-row {
+    min-height: 30px;
+    padding: 5px 8px;
+  }
+
+  .pf3-row p {
+    font-size: 10.8px;
+    line-height: 1.22;
+  }
+
+  .pf3-story {
+    min-height: 52px;
+  }
+}
+
+@media (min-width: 1441px) {
+  :root {
+    --panel-w: clamp(220px, 14vw, 290px);
+  }
+
+  .pf3-frame {
+    width: min(1280px, calc(100vw - 32px));
+    height: calc(100vh - 24px);
+    margin: 12px auto;
+    grid-template-rows: 44px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .pf3-shell {
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .pf3-left {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: stretch;
+  }
+
+  .pf3-viewer {
+    height: 250px;
+    min-height: 250px;
+  }
+
+  .pf3-planet-stage {
+    width: 168px;
+    height: 168px;
+    transform: translateY(-5px);
+  }
+
+  .pf3-globe {
+    width: 148px;
+    height: 148px;
+  }
+
+  .pf3-viewer--sun .pf3-planet-stage {
+    width: 180px;
+    height: 180px;
+    transform: translateY(-8px);
+  }
+
+  .pf3-viewer--sun .pf3-globe {
+    width: 158px;
+    height: 158px;
+  }
+
+  .pf3-panel,
+  .pf3-hero-card {
+    padding: 13px 15px;
+  }
+
+  .pf3-chip-grid,
+  .pf3-info-grid,
+  .pf3-story-grid {
+    gap: 14px;
+  }
+}
+
+@media (max-width: 1180px) {
+  body.modal-open {
+    overflow: auto;
+  }
+
+  .planet-focus-overlay.pf3-page {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .pf3-frame {
+    width: min(100vw - 20px, 1080px);
+    height: auto;
+    min-height: calc(100vh - 20px);
+    margin: 8px auto;
+    grid-template-rows: auto auto;
+  }
+
+  .pf3-topbar-meta {
+    display: none;
+  }
+
+  .pf3-shell {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .pf3-left {
+    grid-template-rows: auto;
+  }
+
+  .pf3-viewer {
+    min-height: 280px;
+  }
+
+  .pf3-chip-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pf3-info-grid,
+  .pf3-story-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .pf3-frame {
+    width: min(100vw - 16px, 1080px);
+    margin: 8px auto;
+    gap: 8px;
+  }
+
+  .pf3-topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  button.pf3-back,
+  .pf3-back {
+    width: 100%;
+  }
+
+  .pf3-viewer {
+    min-height: 250px;
+  }
+
+  .pf3-planet-stage {
+    width: 180px;
+    height: 180px;
+  }
+
+  .pf3-globe {
+    width: 156px;
+    height: 156px;
+  }
+
+  .pf3-chip-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pf3-row {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .pf3-desc,
+  .pf3-story p {
+    text-align: left;
+  }
+}
+
+/* =====================================================
+   RESPONSIVE — HUD
+   ===================================================== */
+
+@media (max-width: 900px) {
+  .ctrl-panel {
+    width: clamp(180px, 28vw, 255px);
+  }
+}
+
+@media (max-width: 600px) {
   .ctrl-panel {
     top: var(--gap);
     left: var(--gap);
@@ -464,26 +1291,29 @@
     flex-wrap: wrap;
     gap: 7px;
     padding: 9px 12px;
-    max-height: none;
-    overflow: visible;
+    max-height: 45vh;
   }
+
   .ctrl-title {
     margin-bottom: 0;
     font-size: 12px;
     flex-shrink: 0;
   }
+
   .ctrl-btn {
     width: auto;
     flex: 1;
-    min-width: 70px;
+    min-width: 74px;
     text-align: center;
     font-size: 10px;
     padding: 5px 8px;
     margin-top: 0;
   }
+
   .ctrl-cmds {
     display: none;
   }
+
   .ctrl-btn--subtle {
     display: none;
   }
@@ -494,6 +1324,7 @@
     font-size: 10px;
     padding: 4px 9px;
   }
+
   .marker-hint {
     bottom: 14px;
     font-size: 10px;
@@ -502,6 +1333,15 @@
     text-align: center;
     max-width: 85vw;
   }
+
+  .interaction-tip {
+    bottom: 64px;
+    font-size: 10px;
+    padding: 7px 14px;
+    white-space: normal;
+    max-width: 88vw;
+  }
+
   .transcript-toast {
     bottom: 56px;
     font-size: 10px;
@@ -509,10 +1349,346 @@
     white-space: normal;
     text-align: center;
   }
+
+  .voice-answer-card {
+    top: calc(var(--gap) + 110px);
+    left: var(--gap);
+    right: var(--gap);
+    width: auto;
+  }
+
+  .quiz-panel {
+    padding: 22px;
+  }
 }
 
-@media (min-width: 1440px) {
-  :root {
-    --panel-w: clamp(220px, 14vw, 290px);
+/* =====================================================
+   PLANET DETAIL — CINEMATIC GALAXY POP-UP ANIMATION
+   Add ONCE at the VERY BOTTOM of App.css
+   ===================================================== */
+
+.planet-focus-overlay.pf3-page {
+  isolation: isolate;
+}
+
+.pf3-cinematic-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(120, 170, 255, 0.2),
+      transparent 22%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 220, 140, 0.13),
+      transparent 12%
+    ),
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 255, 255, 0.08) 0 1px,
+      transparent 1px 14px
+    );
+  transform: scale(0.7) rotate(-8deg);
+  animation: pf3GalaxyBgIn 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.pf3-opening {
+  animation: pf3OverlayIn 520ms ease forwards;
+}
+
+.pf3-closing {
+  animation: pf3OverlayOut 320ms ease forwards;
+}
+
+.pf3-opening .pf3-frame {
+  transform-origin: center center;
+  animation: pf3PortalFrameIn 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.pf3-closing .pf3-frame {
+  transform-origin: center center;
+  animation: pf3PortalFrameOut 300ms ease both;
+}
+
+.pf3-opening .pf3-viewer {
+  animation: pf3ViewerIn 780ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.pf3-opening .pf3-globe {
+  animation: pf3PlanetPop 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.pf3-portal-flare {
+  position: absolute;
+  inset: -45%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    conic-gradient(
+      from 90deg,
+      transparent,
+      rgba(110, 170, 255, 0.28),
+      rgba(255, 220, 140, 0.34),
+      rgba(180, 110, 255, 0.22),
+      transparent
+    ),
+    radial-gradient(
+      circle,
+      color-mix(in srgb, var(--planet-glow) 25%, transparent),
+      transparent 55%
+    );
+  mix-blend-mode: screen;
+  transform: scale(0.32) rotate(-40deg);
+  animation: pf3PortalFlare 1150ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.pf3-planet-stage,
+.pf3-viewer-label {
+  z-index: 3;
+}
+
+.pf3-anim-card {
+  opacity: 0;
+  transform: translateY(18px) scale(0.97);
+  filter: blur(8px);
+  animation: pf3CardReveal 620ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(120ms + (var(--i, 0) * 65ms));
+}
+
+.pf3-anim-item {
+  opacity: 0;
+  transform: translateY(8px);
+  filter: blur(5px);
+  animation: pf3ItemReveal 440ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(260ms + (var(--i, 0) * 35ms));
+}
+
+.pf3-opening .pf3-stars {
+  animation: pf3StarDrift 1300ms ease-out both;
+}
+
+.pf3-opening .pf3-orbit {
+  animation: pf3OrbitReveal 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.pf3-opening .pf3-orbit-1 {
+  animation-delay: 140ms;
+}
+
+.pf3-opening .pf3-orbit-2 {
+  animation-delay: 210ms;
+}
+
+.pf3-opening .pf3-orbit-3 {
+  animation-delay: 280ms;
+}
+
+.pf3-closing .pf3-anim-card,
+.pf3-closing .pf3-anim-item,
+.pf3-closing .pf3-viewer {
+  animation: none;
+}
+
+@keyframes pf3OverlayIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pf3OverlayOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes pf3GalaxyBgIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) rotate(-8deg);
+  }
+
+  45% {
+    opacity: 0.85;
+  }
+
+  100% {
+    opacity: 0.18;
+    transform: scale(1.45) rotate(8deg);
+  }
+}
+
+@keyframes pf3PortalFrameIn {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.92);
+    filter: blur(18px) saturate(1.8);
+  }
+
+  55% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.01);
+    filter: blur(0) saturate(1.2);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0) saturate(1);
+  }
+}
+
+@keyframes pf3PortalFrameOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+    filter: blur(10px);
+  }
+}
+
+@keyframes pf3ViewerIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+    filter: blur(14px) brightness(1.5);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.02);
+    filter: blur(0) brightness(1.15);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) brightness(1);
+  }
+}
+
+@keyframes pf3PlanetPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.62) rotate(-8deg);
+    filter: brightness(2) saturate(1.5);
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(1.08) rotate(2deg);
+    filter: brightness(1.25) saturate(1.15);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+    filter: brightness(1) saturate(1);
+  }
+}
+
+@keyframes pf3PortalFlare {
+  0% {
+    opacity: 0;
+    transform: scale(0.25) rotate(-60deg);
+  }
+
+  35% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.45) rotate(80deg);
+  }
+}
+
+@keyframes pf3CardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+    filter: blur(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes pf3ItemReveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes pf3StarDrift {
+  from {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+
+  to {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+}
+
+@keyframes pf3OrbitReveal {
+  from {
+    opacity: 0;
+    transform: rotateX(72deg) rotateZ(-12deg) scale(0.5);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotateX(72deg) rotateZ(-12deg) scale(1);
+  }
+}
+
+/* Accessibility: reduce motion if user/browser asks for it */
+@media (prefers-reduced-motion: reduce) {
+  .pf3-opening,
+  .pf3-closing,
+  .pf3-frame,
+  .pf3-viewer,
+  .pf3-globe,
+  .pf3-portal-flare,
+  .pf3-cinematic-bg,
+  .pf3-anim-card,
+  .pf3-anim-item,
+  .pf3-stars,
+  .pf3-orbit {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
 }

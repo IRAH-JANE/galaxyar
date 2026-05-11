@@ -1,4 +1,3 @@
-/* index.css — base resets only. A-Frame handles the scene layer. */
 *,
 *::before,
 *::after {
@@ -16,7 +15,17 @@ body {
   font-family: "Segoe UI", system-ui, sans-serif;
 }
 
-/* UI overlay — above A-Frame canvas */
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
 #ui-root {
   position: fixed;
   inset: 0;

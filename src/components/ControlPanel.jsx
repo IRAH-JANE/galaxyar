@@ -1,7 +1,17 @@
-import React, { useState, forwardRef } from "react";
+import React, { forwardRef, useState } from "react";
 
 const ControlPanel = forwardRef(function ControlPanel(
-  { listening, startVoice, stopVoice, isPaused, setIsPaused },
+  {
+    listening,
+    startVoice,
+    stopVoice,
+    isPaused,
+    setIsPaused,
+    onShowGalaxy,
+    onShowSolar,
+    onUseHiro,
+    onOpenQuiz,
+  },
   ref,
 ) {
   const [showCmds, setShowCmds] = useState(false);
@@ -17,13 +27,40 @@ const ControlPanel = forwardRef(function ControlPanel(
         {listening ? "🎙 Stop Voice" : "🎙 Start Voice"}
       </button>
 
-      <button className="ctrl-btn" onClick={() => setIsPaused(!isPaused)}>
+      <button
+        className="ctrl-btn"
+        onClick={() => setIsPaused(!isPaused)}
+        style={{
+          background: isPaused
+            ? "rgba(76, 175, 80, 0.2)"
+            : "rgba(255, 255, 255, 0.07)",
+          borderColor: isPaused
+            ? "rgba(76, 175, 80, 0.4)"
+            : "rgba(255, 255, 255, 0.1)",
+        }}
+      >
         {isPaused ? "▶ Resume" : "⏸ Pause"}
+      </button>
+
+      <button className="ctrl-btn" onClick={onShowGalaxy}>
+        🌌 Show Galaxy
+      </button>
+
+      <button className="ctrl-btn" onClick={onShowSolar}>
+        🪐 Show Solar
+      </button>
+
+      <button className="ctrl-btn" onClick={onOpenQuiz}>
+        🧠 Quiz Mode
+      </button>
+
+      <button className="ctrl-btn ctrl-btn--subtle" onClick={onUseHiro}>
+        📷 Use HIRO Marker
       </button>
 
       <button
         className="ctrl-btn ctrl-btn--subtle"
-        onClick={() => setShowCmds((v) => !v)}
+        onClick={() => setShowCmds((value) => !value)}
       >
         {showCmds ? "▲ Hide Commands" : "▼ Voice Commands"}
       </button>
@@ -34,16 +71,28 @@ const ControlPanel = forwardRef(function ControlPanel(
             <strong>Hey Galaxy</strong> — wake up
           </div>
           <div className="ctrl-cmd">
-            <strong>Goodbye / Sleep</strong> — sleep
+            <strong>Hey Galaxy, show galaxy</strong> — Milky Way view
           </div>
           <div className="ctrl-cmd">
-            <strong>[Planet name]</strong> — focus planet
+            <strong>Hey Galaxy, show solar system</strong> — free solar view
           </div>
           <div className="ctrl-cmd">
-            <strong>Moons / Temperature / Gravity...</strong>
+            <strong>[Planet name]</strong> — open 3D info
+          </div>
+          <div className="ctrl-cmd">
+            <strong>How many moons does Mars have?</strong> — quick answer box
+          </div>
+          <div className="ctrl-cmd">
+            <strong>Temperature / Gravity / Diameter</strong> — quick facts
+          </div>
+          <div className="ctrl-cmd">
+            <strong>Quiz mode</strong> — start quiz
           </div>
           <div className="ctrl-cmd">
             <strong>Pause / Resume</strong> — orbits
+          </div>
+          <div className="ctrl-cmd">
+            <strong>Goodbye / Sleep</strong> — sleep
           </div>
         </div>
       )}
