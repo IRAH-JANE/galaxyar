@@ -10,6 +10,7 @@ const ControlPanel = forwardRef(function ControlPanel(
     onShowGalaxy,
     onShowSolar,
     onUseHiro,
+    onOpenScanner,
     onOpenQuiz,
   },
   ref,
@@ -50,6 +51,10 @@ const ControlPanel = forwardRef(function ControlPanel(
         🪐 Show Solar
       </button>
 
+      <button className="ctrl-btn" onClick={onOpenScanner}>
+        📷 Planet Scanner
+      </button>
+
       <button className="ctrl-btn" onClick={onOpenQuiz}>
         🧠 Quiz Mode
       </button>
@@ -75,6 +80,9 @@ const ControlPanel = forwardRef(function ControlPanel(
           </div>
           <div className="ctrl-cmd">
             <strong>Hey Galaxy, show solar system</strong> — free solar view
+          </div>
+          <div className="ctrl-cmd">
+            <strong>Hey Galaxy, scan planet</strong> — Planet Scanner
           </div>
           <div className="ctrl-cmd">
             <strong>[Planet name]</strong> — open 3D info

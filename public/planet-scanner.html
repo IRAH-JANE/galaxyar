@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>GalaxyAR Planet Scanner</title>
+
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        font-family: "Segoe UI", system-ui, sans-serif;
+      }
+
+      .scanner-ui {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        pointer-events: none;
+        color: #fff;
+      }
+
+      .scanner-top {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        right: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .scanner-back,
+      .scanner-detail-btn {
+        pointer-events: auto;
+        appearance: none;
+        border: 1px solid rgba(145, 180, 255, 0.22);
+        border-radius: 999px;
+        background: rgba(6, 10, 25, 0.86);
+        color: #fff;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 800;
+        padding: 9px 14px;
+        cursor: pointer;
+        text-decoration: none;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+      }
+
+      .scanner-back:hover,
+      .scanner-detail-btn:hover {
+        background: rgba(18, 30, 62, 0.95);
+      }
+
+      .scanner-status {
+        pointer-events: none;
+        border: 1px solid rgba(145, 180, 255, 0.18);
+        border-radius: 999px;
+        background: rgba(6, 10, 25, 0.82);
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 12px;
+        font-weight: 800;
+        padding: 9px 14px;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+      }
+
+      .scanner-card {
+        position: absolute;
+        left: 50%;
+        bottom: 24px;
+        width: min(430px, calc(100vw - 28px));
+        transform: translateX(-50%) translateY(20px);
+        opacity: 0;
+        pointer-events: auto;
+        padding: 16px;
+        border-radius: 20px;
+        background:
+          radial-gradient(
+            circle at 20% 20%,
+            rgba(79, 159, 255, 0.18),
+            transparent 34%
+          ),
+          rgba(6, 10, 25, 0.9);
+        border: 1px solid rgba(145, 180, 255, 0.16);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+        transition:
+          opacity 0.35s ease,
+          transform 0.35s ease;
+      }
+
+      .scanner-card.visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .scanner-card-label {
+        color: rgba(120, 180, 255, 0.9);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .scanner-card h1 {
+        font-size: 34px;
+        line-height: 1;
+        margin-bottom: 8px;
+      }
+
+      .scanner-card p {
+        color: rgba(255, 255, 255, 0.74);
+        font-size: 13px;
+        line-height: 1.45;
+        margin-bottom: 12px;
+      }
+
+      .scanner-facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .scanner-fact {
+        padding: 9px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.055);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .scanner-fact span {
+        display: block;
+        color: rgba(255, 255, 255, 0.48);
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .scanner-fact strong {
+        display: block;
+        font-size: 12px;
+        color: #fff;
+      }
+
+      .scanner-guide {
+        position: absolute;
+        left: 50%;
+        bottom: 24px;
+        transform: translateX(-50%);
+        width: min(560px, calc(100vw - 28px));
+        text-align: center;
+        padding: 12px 16px;
+        border-radius: 999px;
+        background: rgba(6, 10, 25, 0.82);
+        border: 1px solid rgba(145, 180, 255, 0.14);
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 13px;
+        font-weight: 700;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        transition: opacity 0.25s ease;
+      }
+
+      .scanner-guide.hidden {
+        opacity: 0;
+      }
+
+      .scan-frame {
+        position: absolute;
+        inset: 18%;
+        border-radius: 28px;
+        border: 2px solid rgba(79, 159, 255, 0.18);
+        box-shadow:
+          0 0 36px rgba(79, 159, 255, 0.18),
+          inset 0 0 36px rgba(79, 159, 255, 0.08);
+        pointer-events: none;
+        opacity: 0.75;
+      }
+
+      .scan-frame::before {
+        content: "";
+        position: absolute;
+        left: 10%;
+        right: 10%;
+        top: 12%;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(105, 200, 255, 0.85),
+          transparent
+        );
+        animation: scanLine 2.2s ease-in-out infinite;
+      }
+
+      @keyframes scanLine {
+        0% {
+          top: 12%;
+          opacity: 0;
+        }
+
+        20% {
+          opacity: 1;
+        }
+
+        80% {
+          opacity: 1;
+        }
+
+        100% {
+          top: 86%;
+          opacity: 0;
+        }
+      }
+
+      .detected .scan-frame {
+        opacity: 0;
+      }
+
+      .detected .scanner-guide {
+        opacity: 0;
+      }
+
+      a-scene {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="scanner-ui" id="scanner-ui">
+      <div class="scanner-top">
+        <a class="scanner-back" href="/">← Back to GalaxyAR</a>
+        <div class="scanner-status" id="scan-status">
+          🔎 Scanning Earth card...
+        </div>
+      </div>
+
+      <div class="scan-frame"></div>
+
+      <div class="scanner-guide" id="scanner-guide">
+        Show your <strong>GALAXYAR • EARTH</strong> card to the camera.
+      </div>
+
+      <div class="scanner-card" id="scanner-card">
+        <div class="scanner-card-label">Planet Detected</div>
+        <h1>Earth</h1>
+        <p>
+          Earth is the third planet from the Sun and the only known world that
+          supports life. Its Moon stabilizes Earth’s tilt and influences ocean
+          tides.
+        </p>
+
+        <div class="scanner-facts">
+          <div class="scanner-fact">
+            <span>Gravity</span>
+            <strong>9.8 m/s²</strong>
+          </div>
+          <div class="scanner-fact">
+            <span>Moons</span>
+            <strong>1</strong>
+          </div>
+          <div class="scanner-fact">
+            <span>Diameter</span>
+            <strong>12,742 km</strong>
+          </div>
+        </div>
+
+        <button class="scanner-detail-btn" id="view-details">
+          View Full Earth Details →
+        </button>
+      </div>
+    </div>
+
+    <a-scene
+      mindar-image="imageTargetSrc: /targets/earth.mind; filterMinCF: 0.0001; filterBeta: 0.001;"
+      color-space="sRGB"
+      renderer="colorManagement: true; physicallyCorrectLights: true; antialias: true; alpha: true;"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+    >
+      <a-assets>
+        <img id="earthTexture" src="/textures/earth.jpg" />
+        <img id="moonTexture" src="/textures/moon.jpg" />
+      </a-assets>
+
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <a-light type="ambient" intensity="1.5"></a-light>
+      <a-light type="directional" position="0 1 1" intensity="1.7"></a-light>
+
+      <a-entity id="earth-target" mindar-image-target="targetIndex: 0">
+        <a-entity
+          id="earth-ar-rig"
+          position="0 0 0.08"
+          rotation="0 0 0"
+          scale="0.8 0.8 0.8"
+        >
+          <a-sphere
+            radius="0.35"
+            material="src: #earthTexture; roughness: 0.85; metalness: 0;"
+            animation="property: rotation; from: 0 0 0; to: 0 360 0; loop: true; dur: 10000; easing: linear;"
+          ></a-sphere>
+
+          <a-sphere
+            radius="0.43"
+            material="color: #4f9fff; opacity: 0.16; transparent: true; shader: flat; side: back;"
+            animation="property: scale; dir: alternate; to: 1.15 1.15 1.15; loop: true; dur: 1700; easing: easeInOutSine;"
+          ></a-sphere>
+
+          <a-torus
+            radius="0.55"
+            radius-tubular="0.006"
+            rotation="90 0 0"
+            material="color: #91c8ff; opacity: 0.38; transparent: true; shader: flat;"
+          ></a-torus>
+
+          <a-entity
+            animation="property: rotation; from: 0 0 0; to: 0 360 0; loop: true; dur: 5500; easing: linear;"
+          >
+            <a-sphere
+              position="0.55 0 0"
+              radius="0.055"
+              material="src: #moonTexture; roughness: 1;"
+            ></a-sphere>
+            <a-sphere
+              position="0.55 0 0"
+              radius="0.09"
+              material="color: #ffffff; opacity: 0.12; transparent: true; shader: flat; side: back;"
+            ></a-sphere>
+          </a-entity>
+
+          <a-text
+            value="EARTH"
+            position="0 -0.52 0"
+            align="center"
+            color="#ffffff"
+            scale="0.22 0.22 0.22"
+            material="shader: flat"
+          ></a-text>
+        </a-entity>
+      </a-entity>
+    </a-scene>
+
+    <script>
+      const ui = document.getElementById("scanner-ui");
+      const statusEl = document.getElementById("scan-status");
+      const scannerCard = document.getElementById("scanner-card");
+      const guide = document.getElementById("scanner-guide");
+      const target = document.getElementById("earth-target");
+      const viewDetails = document.getElementById("view-details");
+
+      let spoken = false;
+
+      function speak(text) {
+        try {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 0.95;
+          utterance.pitch = 1.05;
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(utterance);
+        } catch {
+          // Speech is optional.
+        }
+      }
+
+      target.addEventListener("targetFound", () => {
+        ui.classList.add("detected");
+        scannerCard.classList.add("visible");
+        guide.classList.add("hidden");
+        statusEl.textContent = "🟢 Earth detected";
+
+        if (!spoken) {
+          spoken = true;
+          speak("Earth detected. Showing Earth in augmented reality.");
+        }
+      });
+
+      target.addEventListener("targetLost", () => {
+        ui.classList.remove("detected");
+        scannerCard.classList.remove("visible");
+        guide.classList.remove("hidden");
+        statusEl.textContent = "🟡 Earth lost — show the card again";
+      });
+
+      viewDetails.addEventListener("click", () => {
+        window.location.href = "/?planet=Earth";
+      });
+    </script>
+  </body>
+</html>

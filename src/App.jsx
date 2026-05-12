@@ -116,6 +116,25 @@ function App() {
     speak("Returning to HIRO marker AR mode.");
   }, [speak]);
 
+  const openPlanetScanner = useCallback(() => {
+    setFocusPlanet(null);
+    setQuizOpen(false);
+    setVoiceAnswer(null);
+    window.location.href = "/planet-scanner.html";
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const planetFromScanner = params.get("planet");
+
+    if (planetFromScanner && planets[planetFromScanner]) {
+      openPlanet(planetFromScanner);
+
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, "", cleanUrl);
+    }
+  }, [openPlanet]);
+
   const openQuiz = useCallback(() => {
     setFocusPlanet(null);
     setVoiceAnswer(null);
@@ -227,6 +246,19 @@ function App() {
 
       if (wantsSolar) {
         showSolarSystem();
+        return;
+      }
+
+      const wantsScanner =
+        raw.includes("scan planet") ||
+        raw.includes("planet scanner") ||
+        raw.includes("scan earth") ||
+        raw.includes("image scanner") ||
+        raw.includes("detect planet");
+
+      if (wantsScanner) {
+        speak("Opening planet scanner.");
+        window.location.href = "/planet-scanner.html";
         return;
       }
 
@@ -439,6 +471,7 @@ function App() {
             onShowGalaxy={showGalaxy}
             onShowSolar={showSolarSystem}
             onUseHiro={useHiroMode}
+            onOpenScanner={openPlanetScanner}
             onOpenQuiz={openQuiz}
           />
 
