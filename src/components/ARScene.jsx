@@ -645,9 +645,8 @@ function ARScene({ isPaused = false, mode = "hiro" }) {
             rotation: flare.rot,
             material:
               "color:#ffd27a;opacity:0.28;transparent:true;shader:flat;",
-            animation__spin: `property: rotation; to: ${
-              flare.rot.split(" ")[0]
-            } 360 0; dur:${flare.dur}; loop:true; easing:linear;`,
+            animation__spin: `property: rotation; to: ${flare.rot.split(" ")[0]
+              } 360 0; dur:${flare.dur}; loop:true; easing:linear;`,
           },
           root,
         );
@@ -1134,8 +1133,8 @@ function ARScene({ isPaused = false, mode = "hiro" }) {
           const sy =
             cy +
             Math.sin(s.angle) *
-              Math.max(0, wrapped - warp * 9 * s.depth) *
-              0.85;
+            Math.max(0, wrapped - warp * 9 * s.depth) *
+            0.85;
 
           sctx.beginPath();
           sctx.moveTo(sx, sy);
