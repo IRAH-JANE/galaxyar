@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import ARScene from "./components/ARScene";
 import ControlPanel from "./components/ControlPanel";
 import PlanetFocus from "./components/PlanetFocus";
 import QuizMode from "./components/QuizMode";
@@ -44,6 +45,31 @@ function App() {
     speakText(text);
   }, []);
 
+  const syncPausedToEngine = useCallback((nextPaused) => {
+    const apply = () => {
+      window.__galaxyAR?.setPaused?.(nextPaused);
+    };
+
+    apply();
+    setTimeout(apply, 100);
+    setTimeout(apply, 300);
+  }, []);
+
+  const setPausedAndSync = useCallback(
+    (valueOrUpdater) => {
+      setIsPaused((previous) => {
+        const next =
+          typeof valueOrUpdater === "function"
+            ? Boolean(valueOrUpdater(previous))
+            : Boolean(valueOrUpdater);
+
+        syncPausedToEngine(next);
+        return next;
+      });
+    },
+    [syncPausedToEngine],
+  );
+
   const showTranscript = useCallback((text) => {
     setTranscript(text);
     clearTimeout(transcriptTimer.current);
@@ -80,20 +106,32 @@ function App() {
     setFocusPlanet(null);
   }, []);
 
+  const callGalaxyEngine = useCallback((methodName, modeName) => {
+    const call = () => {
+      window.__galaxyAR?.[methodName]?.();
+
+      window.dispatchEvent(
+        new CustomEvent("galaxy-mode-request", {
+          detail: { mode: modeName },
+        }),
+      );
+    };
+
+    call();
+    setTimeout(call, 100);
+    setTimeout(call, 300);
+  }, []);
+
   const showGalaxy = useCallback(() => {
     setFocusPlanet(null);
     setQuizOpen(false);
     setVoiceAnswer(null);
     setSpaceMode("galaxy");
 
-    if (window.__galaxyAR?.showGalaxy) {
-      window.__galaxyAR.showGalaxy();
-    } else {
-      setTimeout(() => window.__galaxyAR?.showGalaxy?.(), 300);
-    }
+    callGalaxyEngine("showGalaxy", "galaxy");
 
     speak("Showing the Milky Way galaxy.");
-  }, [speak]);
+  }, [callGalaxyEngine, speak]);
 
   const showSolarSystem = useCallback(() => {
     setFocusPlanet(null);
@@ -101,20 +139,21 @@ function App() {
     setVoiceAnswer(null);
     setSpaceMode("solar");
 
-    if (window.__galaxyAR?.showSolar) {
-      window.__galaxyAR.showSolar();
-    } else {
-      setTimeout(() => window.__galaxyAR?.showSolar?.(), 300);
-    }
+    callGalaxyEngine("showSolar", "solar");
 
     speak("Showing the solar system.");
-  }, [speak]);
+  }, [callGalaxyEngine, speak]);
 
   const useHiroMode = useCallback(() => {
+    setFocusPlanet(null);
+    setQuizOpen(false);
+    setVoiceAnswer(null);
     setSpaceMode("hiro");
-    window.__galaxyAR?.useHiro?.();
+
+    callGalaxyEngine("useHiro", "hiro");
+
     speak("Returning to HIRO marker AR mode.");
-  }, [speak]);
+  }, [callGalaxyEngine, speak]);
 
   const openPlanetScanner = useCallback(() => {
     setFocusPlanet(null);
@@ -158,29 +197,30 @@ function App() {
       setMarkerFound(true);
       setSpaceMode("hiro");
     };
-    const onLost = () => setMarkerFound(false);
-    const onMode = (event) => setSpaceMode(event.detail?.mode || "hiro");
+
+    const onLost = () => {
+      setMarkerFound(false);
+    };
+
+    const onMode = (event) => {
+      const nextMode = event.detail?.mode || "hiro";
+      setSpaceMode(nextMode);
+    };
 
     window.addEventListener("marker-found", onFound);
     window.addEventListener("marker-lost", onLost);
     window.addEventListener("galaxy-mode-changed", onMode);
 
-    const marker = document.querySelector("#hiro-marker");
-    marker?.addEventListener("markerFound", onFound);
-    marker?.addEventListener("markerLost", onLost);
-
     return () => {
       window.removeEventListener("marker-found", onFound);
       window.removeEventListener("marker-lost", onLost);
       window.removeEventListener("galaxy-mode-changed", onMode);
-      marker?.removeEventListener("markerFound", onFound);
-      marker?.removeEventListener("markerLost", onLost);
     };
   }, []);
 
   useEffect(() => {
-    window.__galaxyAR?.setPaused?.(isPaused);
-  }, [isPaused]);
+    syncPausedToEngine(isPaused);
+  }, [isPaused, syncPausedToEngine]);
 
   useEffect(() => {
     const modalOpen = Boolean(focusPlanet || quizOpen);
@@ -277,13 +317,13 @@ function App() {
       }
 
       if (raw.includes("pause")) {
-        setIsPaused(true);
+        setPausedAndSync(true);
         speak("Solar system paused.");
         return;
       }
 
       if (raw.includes("resume") || raw.includes("continue")) {
-        setIsPaused(false);
+        setPausedAndSync(false);
         speak("Solar system resumed.");
         return;
       }
@@ -316,6 +356,7 @@ function App() {
     [
       openPlanet,
       openQuiz,
+      setPausedAndSync,
       showGalaxy,
       showSolarSystem,
       showTranscript,
@@ -443,14 +484,26 @@ function App() {
 
   const statusText = (() => {
     if (spaceMode === "galaxy") return "🌌 Galaxy View";
-    if (spaceMode === "solar") return "🪐 Free Solar View";
-    if (markerFound) return "🟢 Marker detected — scroll to zoom, tap a planet";
+
+    if (spaceMode === "solar") {
+      return isPaused ? "⏸ Free Solar View Paused" : "🪐 Free Solar View";
+    }
+
+    if (markerFound) {
+      return isPaused
+        ? "⏸ Marker detected — paused"
+        : "🟢 Marker detected — tap a planet";
+    }
+
     if (listening) return awake ? "🟢 GALAXY ACTIVE" : "🟡 Say: Hey Galaxy";
+
     return "⚫ OFFLINE";
   })();
 
   return (
     <>
+      <ARScene isPaused={isPaused} mode={spaceMode} />
+
       {focusPlanet && (
         <PlanetFocus planet={focusPlanet} onClose={closePlanet} />
       )}
@@ -467,7 +520,7 @@ function App() {
             startVoice={startVoice}
             stopVoice={stopVoice}
             isPaused={isPaused}
-            setIsPaused={setIsPaused}
+            setIsPaused={setPausedAndSync}
             onShowGalaxy={showGalaxy}
             onShowSolar={showSolarSystem}
             onUseHiro={useHiroMode}
@@ -484,7 +537,9 @@ function App() {
 
           {(markerFound || spaceMode === "solar") && (
             <div className="interaction-tip">
-              Tap a planet to explore it — swipe/wheel to zoom in.
+              {isPaused
+                ? "Solar system paused."
+                : "Tap a planet to explore it."}
             </div>
           )}
 
