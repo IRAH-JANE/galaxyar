@@ -119,7 +119,7 @@ npm run preview
 
 1. Open the Galaxyar website.
 2. Allow camera access if required.
-3. Use the planet scanner or AR target.
+3. Use the planet scanner or AR target. (https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png)
 4. Explore the solar system.
 5. Select a planet to view information.
 6. Try the quiz mode.
