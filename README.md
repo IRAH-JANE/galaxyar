@@ -1,4 +1,3 @@
-Yes, this helps. Your repo already has a `README.md`, but it still shows the default React + Vite template. Replace it with this:
 
 ````md
 # Galaxyar 🌌
